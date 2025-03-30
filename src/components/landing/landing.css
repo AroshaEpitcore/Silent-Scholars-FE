@@ -1,0 +1,43 @@
+@import url('https://fonts.googleapis.com/css2?family=Acme&family=Libre+Bodoni&family=Updock&display=swap');
+
+.font-link {
+  font-family: 'Libre Bodoni', serif;
+  font-size: 100px;
+}
+
+.font-link-2 {
+  font-family: "Acme", sans-serif;
+  color: #584fbf;
+}
+
+/* navbar section styles */
+.navbar-section {
+  background-color: #584fbf;
+}
+
+.navbar-section .navbar-brand {
+  color: #ffffff;
+  font-size: 36px;
+  font-weight: 700;
+  line-height: 44px;
+  letter-spacing: 0em;
+  text-align: left;
+}
+
+/* top banner sction styles */
+.top-banner-section {
+  background-color: #625ac1;
+  height: 80vh;
+}
+
+.top-banner-section .top-banner-header {
+  color: #ffffff;
+}
+
+.top-banner-section .top-banner-btn {
+  color: #ffffff;
+  font-size: medium;
+  background: #f05b5b;
+  padding: 20px;
+  border-radius: 10px;
+}
