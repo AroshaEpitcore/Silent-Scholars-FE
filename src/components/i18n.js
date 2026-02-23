@@ -21,4 +21,14 @@ i8n.use(Backend).use(LanguageDetector).use(initReactI18next).init({
     },
 });
 
+// Set language attribute on HTML element when language changes
+i8n.on('languageChanged', (lng) => {
+    document.documentElement.lang = lng;
+    document.documentElement.setAttribute('lang', lng);
+});
+
+// Set initial language attribute
+document.documentElement.lang = i8n.language;
+document.documentElement.setAttribute('lang', i8n.language);
+
 export default i8n;

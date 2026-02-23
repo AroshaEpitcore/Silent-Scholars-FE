@@ -1,0 +1,226 @@
+/* Modern Header Styles */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Poppins:wght@300;400;500;600;700;800;900&display=swap');
+
+:root {
+  --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  --accent-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  --glass-bg: rgba(255, 255, 255, 0.1);
+  --glass-border: rgba(255, 255, 255, 0.2);
+  --white: #ffffff;
+  --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+/* Modern Navbar */
+.navbar-section {
+background: var(--primary-gradient);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--glass-border);
+  position: sticky;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  transition: all 0.3s ease;
+  padding: 0.5rem 0;
+  height: 70px; /* Fixed height for consistent spacing */
+  display: flex;
+  align-items: center;
+}
+
+.navbar-section.scrolled {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  box-shadow: var(--shadow-lg);
+}
+
+.navbar-section .navbar {
+  padding: 0;
+}
+
+.navbar-section .container-fluid {
+  padding: 0;
+}
+
+/* Brand Styling */
+.navbar-brand {
+  font-family: 'Poppins', sans-serif;
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: var(--white) !important;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.3s ease;
+  padding: 0.5rem 0;
+}
+
+.navbar-brand:hover {
+  transform: scale(1.05);
+  color: var(--white) !important;
+}
+
+.navbar-brand svg {
+  font-size: 1.5rem;
+  transition: all 0.3s ease;
+}
+
+.navbar-brand:hover svg {
+  transform: rotate(360deg);
+}
+
+/* Language Selector */
+.navbar-section .form-select {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  color: var(--white);
+  font-family: 'Inter', sans-serif;
+  font-weight: 500;
+  font-size: 0.9rem;
+  padding: 0.5rem 1rem;
+  border-radius: 25px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+  min-width: 120px;
+}
+
+.navbar-section .form-select:focus {
+  background: var(--glass-bg);
+  border-color: var(--white);
+  box-shadow: 0 0 0 0.2rem rgba(255, 255, 255, 0.25);
+  color: var(--white);
+}
+
+.navbar-section .form-select option {
+  background: #2d3748;
+  color: var(--white);
+}
+
+/* Navigation Buttons */
+.navbar-section .btn {
+  font-family: 'Inter', sans-serif;
+  font-weight: 600;
+  font-size: 0.9rem;
+  padding: 0.5rem 1.5rem;
+  border-radius: 25px;
+  transition: all 0.3s ease;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.navbar-section .btn-outline-light {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  color: var(--white);
+  backdrop-filter: blur(10px);
+}
+
+.navbar-section .btn-outline-light:hover {
+  background: var(--white);
+  color: #667eea;
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.navbar-section .btn-danger {
+  background: var(--secondary-gradient);
+  border: none;
+  color: var(--white);
+}
+
+.navbar-section .btn-danger:hover {
+  background: var(--accent-gradient);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .navbar-section .navbar-brand {
+    font-size: 1.5rem;
+  }
+  
+  .navbar-section .form-select {
+    min-width: 100px;
+    font-size: 0.8rem;
+    padding: 0.4rem 0.8rem;
+  }
+  
+  .navbar-section .btn {
+    font-size: 0.8rem;
+    padding: 0.4rem 1rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .navbar-section .navbar-brand {
+    font-size: 1.3rem;
+  }
+  
+  .navbar-section .form-select {
+    min-width: 80px;
+    font-size: 0.75rem;
+    padding: 0.3rem 0.6rem;
+  }
+  
+  .navbar-section .btn {
+    font-size: 0.75rem;
+    padding: 0.3rem 0.8rem;
+  }
+}
+
+/* Animation for navbar on scroll */
+@keyframes slideDown {
+  from {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.navbar-section.animate {
+  animation: slideDown 0.3s ease-out;
+}
+
+/* Glass morphism effect for scrolled state */
+.navbar-section.scrolled {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.navbar-section.scrolled .navbar-brand {
+  color: #2d3748 !important;
+}
+
+.navbar-section.scrolled .form-select {
+  background: rgba(255, 255, 255, 0.9);
+  border-color: rgba(0, 0, 0, 0.1);
+  color: #2d3748;
+}
+
+.navbar-section.scrolled .form-select option {
+  background: var(--white);
+  color: #2d3748;
+}
+
+.navbar-section.scrolled .btn-outline-light {
+  background: rgba(255, 255, 255, 0.9);
+  border-color: rgba(0, 0, 0, 0.1);
+  color: #2d3748;
+}
+
+.navbar-section.scrolled .btn-outline-light:hover {
+  background: var(--primary-gradient);
+  color: var(--white);
+}

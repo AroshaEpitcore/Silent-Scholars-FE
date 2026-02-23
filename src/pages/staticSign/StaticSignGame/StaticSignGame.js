@@ -81,6 +81,41 @@ export default function StaticSignGame() {
           score: totalMarks, // Save total marks
           // time: timeSpent // Save time spent
         }, { merge: true }); // Use merge to update without overwriting
+
+        // Record activity and score for Guardian Dashboard
+        const GuardianDataService = (await import('../../../services/GuardianDataService')).default;
+        
+        // Record activity
+        await GuardianDataService.recordActivity({
+          activityName: 'Completed Static Signs Lesson',
+          category: 'Static Signs',
+          duration: Math.round(elapsedTime / 1000 / 60), // Convert to minutes
+          score: totalMarks
+        });
+
+        // Record score
+        await GuardianDataService.recordScore({
+          score: totalMarks,
+          category: 'staticSigns',
+          accuracy: Math.round((totalMarks / 100) * 100), // Assuming max score is 100
+          lessonType: 'Static Signs'
+        });
+
+        // Check for achievements
+        await GuardianDataService.checkAchievements();
+
+        // Create performance alert if accuracy is low
+        const accuracy = Math.round((totalMarks / 100) * 100);
+        await GuardianDataService.createPerformanceAlert(user.uid, 'Static Signs', accuracy);
+
+        // Create milestone notification for first lesson
+        const scores = await GuardianDataService.getUserScores(user.uid);
+        if (scores.length === 1) {
+          await GuardianDataService.createMilestoneNotification(
+            user.uid, 
+            'Congratulations! You completed your first lesson.'
+          );
+        }
       } catch (error) {
         console.error("Error saving marks to Firebase:", error);
       }

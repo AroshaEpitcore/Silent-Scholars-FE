@@ -26,11 +26,18 @@ import Login from "./pages/login/Login";
 import Register from "./pages/register/Register";
 import { AuthProvider } from "./AuthProvider"; // Import AuthProvider
 import ProtectedRoute from "./ProtectedRoute"; // Import ProtectedRoute
+import TrafficSigns from "./pages/traffic/TrafficSigns";
+import GuardianDashboard from "./components/guardian/GuardianDashboard";
+import GuardianSettings from "./components/guardian/GuardianSettings";
+import GuardianNotifications from "./components/guardian/GuardianNotifications";
+import ProfileSettings from "./components/profile/ProfileSettings";
 
 function App() {
   return (
     <Suspense fallback={null}>
-      <AuthProvider> {/* Wrap with AuthProvider */}
+      <AuthProvider>
+        {" "}
+        {/* Wrap with AuthProvider */}
         <Router>
           <Layout>
             <Routes>
@@ -88,6 +95,43 @@ function App() {
                   </ProtectedRoute>
                 }
               />
+              {/* Traffic Signs */}
+              <Route path="/traffic-signs" element={<TrafficSigns />} />
+
+              {/* Guardian Dashboard Routes */}
+              <Route
+                path="/guardian-dashboard"
+                element={
+                  <ProtectedRoute>
+                    <GuardianDashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/guardian-settings"
+                element={
+                  <ProtectedRoute>
+                    <GuardianSettings />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/guardian-notifications"
+                element={
+                  <ProtectedRoute>
+                    <GuardianNotifications />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/profile-settings"
+                element={
+                  <ProtectedRoute>
+                    <ProfileSettings />
+                  </ProtectedRoute>
+                }
+              />
+
               <Route
                 path="/dashboard-animals"
                 element={
@@ -212,7 +256,8 @@ function App() {
             </Routes>
           </Layout>
         </Router>
-      </AuthProvider> {/* End AuthProvider */}
+      </AuthProvider>{" "}
+      {/* End AuthProvider */}
     </Suspense>
   );
 }

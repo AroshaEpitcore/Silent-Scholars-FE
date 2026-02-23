@@ -2,8 +2,10 @@
 import { useState } from 'react';
 import { auth } from '../firebaseConfig';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
+import { useTranslation } from 'react-i18next';
 
 function AuthForm() {
+    const { t } = useTranslation();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [isLogin, setIsLogin] = useState(true);
@@ -24,24 +26,24 @@ function AuthForm() {
 
     return (
         <div>
-            <h2>{isLogin ? "Login" : "Sign Up"}</h2>
+            <h2>{isLogin ? t('signIn') : t('signUp')}</h2>
             <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="Email"
+                placeholder={t('enterEmail')}
             />
             <input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="Password"
+                placeholder={t('enterPassword')}
             />
             <button onClick={handleAuth}>
-                {isLogin ? "Login" : "Sign Up"}
+                {isLogin ? t('signIn') : t('signUp')}
             </button>
             <p onClick={() => setIsLogin(!isLogin)}>
-                {isLogin ? "Don't have an account? Sign Up" : "Already have an account? Login"}
+                {isLogin ? t('dontHaveAccount') + ' ' + t('signUp') : t('alreadyHaveAccount') + ' ' + t('signIn')}
             </p>
         </div>
     );
