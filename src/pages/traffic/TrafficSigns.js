@@ -316,7 +316,7 @@ export default function TrafficSigns() {
             </div>
           </div>
 
-          {/* Right Column - Webcam and Predictions */}
+          {/* Middle Column - Webcam */}
           <div className="ts-card">
             <div className="ts-card-header">
               Live Recognition
@@ -328,20 +328,25 @@ export default function TrafficSigns() {
                 </div>
               )}
 
-              {/* Webcam */}
-              <div className="mb-3">
-                <TrafficWebcam
-                  target={target}
-                  topk={3}
-                  mirror
-                  onResult={setResult}
-                  onError={setErr}
-                  videoWidth={360}
-                  videoHeight={270}
-                  showStatus={true}
-                />
-              </div>
+              <TrafficWebcam
+                target={target}
+                topk={3}
+                mirror
+                onResult={setResult}
+                onError={setErr}
+                videoWidth={360}
+                videoHeight={270}
+                showStatus={true}
+              />
+            </div>
+          </div>
 
+          {/* Right Column - Match Ring and Predictions */}
+          <div className="ts-card">
+            <div className="ts-card-header">
+              Results
+            </div>
+            <div className="card-body">
               {/* Big Match% ring + label */}
               <div className="ts-match">
                 <div className="ts-match-ring">

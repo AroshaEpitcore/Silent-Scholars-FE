@@ -31,6 +31,7 @@ import GuardianDashboard from "./components/guardian/GuardianDashboard";
 import GuardianSettings from "./components/guardian/GuardianSettings";
 import GuardianNotifications from "./components/guardian/GuardianNotifications";
 import ProfileSettings from "./components/profile/ProfileSettings";
+import ScrollToTop from "./components/ScrollToTop";
 
 function App() {
   return (
@@ -39,6 +40,7 @@ function App() {
         {" "}
         {/* Wrap with AuthProvider */}
         <Router>
+          <ScrollToTop />
           <Layout>
             <Routes>
               {/* Public routes */}
