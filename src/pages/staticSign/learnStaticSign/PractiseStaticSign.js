@@ -1,23 +1,15 @@
-import React, { useEffect, useState, useRef } from "react";
-import Webcam from "react-webcam";
+import React, { useState, useRef } from "react";
 import * as hands from "@mediapipe/hands";
 import * as cam from "@mediapipe/camera_utils";
 import { Hands } from "@mediapipe/hands";
 import axios from "axios";
-import { Image, Button, Result, PageHeader, Col, Row, Card, Typography } from "antd";
-import { PlayCircleOutlined } from "@ant-design/icons";
-import "antd/dist/antd.css";
 import Test from "./Test";
 import { StaticSignData } from "../../../Data/StaticSignData";
 import { useNavigate, useParams } from "react-router-dom";
-
-const { Title, Text } = Typography;
-
-let time = 0;
-let landmarks = null;
+import "./practise-static-sign.css";
 
 export default function PracticeStaticSign() {
-  let navigate = useNavigate();
+  const navigate = useNavigate();
   const routeLearn = () => navigate("/learn-static-sign");
 
   const [predictData, setPredictData] = useState([]);
@@ -28,17 +20,19 @@ export default function PracticeStaticSign() {
   const [learn, setLearn] = useState(true);
   const [practice, setPractice] = useState(false);
   const [isStarted, setIsStarted] = useState(false);
-  const [isCameraOn, setIsCameraOn] = useState(true);
+  const [isCameraOn, setIsCameraOn] = useState(false);
   const [cameraData, setCameraData] = useState(null);
-  const [SignData, setSignData] = useState(StaticSignData);
-
+  const [SignData] = useState(StaticSignData);
   const [landmarkClass, setLandmarkClass] = useState("none");
   const [probability, setProbability] = useState(0);
   const { id } = useParams();
 
+  const sign = SignData[id - 1];
+
   const onClickStart = () => {
     setLearn(false);
     setPractice(true);
+    setIsCameraOn(true);
     startDetection();
   };
 
@@ -60,7 +54,6 @@ export default function PracticeStaticSign() {
       for (const landmarks of results.multiHandLandmarks) {
         connect(canvasCtx, landmarks, hands.HAND_CONNECTIONS, { color: "#00FF00", lineWidth: 4 });
         connect(canvasCtx, landmarks, { color: "#FF0000", lineWidth: 2 });
-
         landmarks.map((item) => {
           totalLandmarks.push(item.x, item.y, item.z);
         });
@@ -78,24 +71,21 @@ export default function PracticeStaticSign() {
 
   const startDetection = () => {
     setIsStarted(true);
-    setIsCameraOn(true);
-    const hands = new Hands({
+    const handsInstance = new Hands({
       locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`,
     });
-
-    hands.setOptions({
+    handsInstance.setOptions({
       maxNumHands: 1,
       modelComplexity: 1,
       minDetectionConfidence: 0.5,
       minTrackingConfidence: 0.5,
     });
-
-    hands.onResults(onResults);
+    handsInstance.onResults(onResults);
     if (webcamRef.current) {
       camera = new cam.Camera(webcamRef.current.video, {
         onFrame: async () => {
           try {
-            await hands.send({ image: webcamRef.current.video });
+            await handsInstance.send({ image: webcamRef.current.video });
           } catch (error) {}
         },
         width: 640,
@@ -107,78 +97,147 @@ export default function PracticeStaticSign() {
   };
 
   const stopDetection = () => {
-    cameraData.stop();
+    if (cameraData) cameraData.stop();
     setIsStarted(false);
     setIsCameraOn(false);
     routeLearn();
   };
 
+  /* ── derive status ── */
+  const isCorrect = practice && landmarkClass === sign.name;
+  const isHighConf = probability > 0.7;
+  const probPct = Math.round(probability * 100);
+
+  const getStatus = () => {
+    if (learn) return "idle";
+    if (isCorrect && isHighConf) return "success";
+    if (isCorrect && !isHighConf) return "warning";
+    return "error";
+  };
+
+  const statusMap = {
+    idle:    { icon: "▶",  title: "Ready to Practice?",   sub: "Click Start to activate the camera",       cls: "pss-status-box--idle"    },
+    success: { icon: "✅", title: "Perfect Match!",        sub: "Great job! You nailed this sign.",          cls: "pss-status-box--success" },
+    warning: { icon: "⚠️", title: "Almost There!",         sub: "You're close — try to match it more precisely.", cls: "pss-status-box--warning" },
+    error:   { icon: "❌", title: "Keep Trying!",          sub: "Your sign doesn't match yet. Adjust your hand.", cls: "pss-status-box--error"   },
+  };
+
+  const status = getStatus();
+  const s = statusMap[status];
+
+  const confFillClass =
+    probPct >= 70 ? "pss-conf-fill--good" :
+    probPct >= 40 ? "pss-conf-fill--ok"   : "pss-conf-fill--bad";
+
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
-      <Card bordered className="shadow-sm rounded-2xl">
-        <PageHeader
-          onBack={() => window.history.back()}
-          title="Static Sign Practice"
-          subTitle="Learn and practice your static sign"
-          style={{ borderBottom: "1px solid #f0f0f0" }}
-        />
+    <div className="pss-page">
+      <div className="pss-container">
 
-        <Row justify="center" align="middle" gutter={[32, 32]} style={{ marginTop: "40px" }}>
-          {/* LEFT: SIGN IMAGE */}
-          <Col xs={24} md={8} className="text-center">
-            <Card bordered={false}>
-              <Title level={4}>Target Sign</Title>
-              <Image width={260} src={SignData[id - 1].alphabetImage} preview={false} className="rounded-lg" />
-              <Text type="secondary" className="block mt-2">
-                {SignData[id - 1].name}
-              </Text>
-            </Card>
-          </Col>
+        {/* ── Header ── */}
+        <div className="pss-header">
+          <button className="pss-back-btn" onClick={routeLearn}>
+            ← Back
+          </button>
+          <div className="pss-header-info">
+            <h1>Static Sign Practice</h1>
+            <p>Position your hand in front of the camera and match the reference sign</p>
+          </div>
+          <div className="pss-sign-badge">{sign.name}</div>
+        </div>
 
-          {/* MIDDLE: CAMERA */}
-          <Col xs={24} md={8} className="text-center">
-            <Card bordered className="shadow-sm">
+        {/* ── Main 3-column grid ── */}
+        <div className="pss-main-grid">
+
+          {/* Left — Reference */}
+          <div className="pss-card">
+            <div className="pss-card-header pss-card-header--primary">Target Sign</div>
+            <div className="pss-card-body">
+              <div className="pss-img-box">
+                <img src={sign.alphabetImage} alt={`Letter ${sign.name}`} />
+              </div>
+              <div className="pss-img-label">Letter "{sign.name}"</div>
+
+              <div className="pss-img-box" style={{ marginTop: "0.75rem", minHeight: "160px" }}>
+                <img src={sign.signImage} alt={`Sign for ${sign.name}`} />
+              </div>
+              <div className="pss-img-label">Hand sign reference</div>
+            </div>
+          </div>
+
+          {/* Middle — Camera */}
+          <div className="pss-card">
+            <div className="pss-card-header pss-card-header--accent">Live Camera</div>
+            <div className="pss-card-body">
               {isCameraOn ? (
                 <Test webcamRef={webcamRef} canvasRef={canvasRef} />
               ) : (
-                <div className="p-6 text-gray-400">Camera is off</div>
+                <div style={{ position: 'relative', width: '100%', paddingTop: '75%', borderRadius: '12px', background: '#0f172a' }}>
+                  <div className="pss-camera-off" style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', color: '#64748b' }}>
+                    <span style={{ fontSize: '2.5rem', opacity: 0.4 }}>📷</span>
+                    <span style={{ fontSize: '0.85rem', fontWeight: 500 }}>Camera inactive</span>
+                    <span style={{ fontSize: '0.75rem', opacity: 0.7 }}>Click Start to begin</span>
+                  </div>
+                </div>
               )}
-            </Card>
-          </Col>
 
-          {/* RIGHT: STATUS + BUTTONS */}
-          <Col xs={24} md={8} className="text-center">
-            <Card bordered={false}>
+              {/* Prediction row */}
+              {practice && (
+                <div className="pss-prediction-row" style={{ marginTop: '0.75rem' }}>
+                  <span className="pss-pred-label">Detected</span>
+                  <span className="pss-pred-value">{landmarkClass}</span>
+                  <span className="pss-pred-prob">{probPct}%</span>
+                </div>
+              )}
+
+              {/* Confidence bar */}
+              {practice && (
+                <>
+                  <div className="pss-conf-track">
+                    <div
+                      className={`pss-conf-fill ${confFillClass}`}
+                      style={{ width: `${probPct}%` }}
+                    />
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', color: '#718096', fontWeight: 500, marginTop: '0.25rem' }}>
+                    <span>Confidence</span>
+                    <span>{probPct}%</span>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* Right — Status + Controls */}
+          <div className="pss-card">
+            <div className="pss-card-header pss-card-header--neutral">Status</div>
+            <div className="pss-card-body">
+
+              <div className={`pss-status-box ${s.cls}`}>
+                <div className="pss-status-icon">{s.icon}</div>
+                <div className="pss-status-title">{s.title}</div>
+                <div className="pss-status-sub">{s.sub}</div>
+              </div>
+
               {learn && (
-                <Result
-                  icon={<PlayCircleOutlined style={{ color: "#1677ff" }} />}
-                  title="Ready to Practice?"
-                  subTitle="Click below to start detecting your hand sign"
-                  extra={<Button type="primary" size="large" onClick={onClickStart}>Start Practice</Button>}
-                />
+                <button className="pss-btn-start" onClick={onClickStart}>
+                  ▶ Start Practice
+                </button>
               )}
 
-              {practice && probability > 0.7 && landmarkClass === SignData[id - 1].name && (
-                <Result status="success" title="Great job!" subTitle="You’re doing it perfectly!" />
+              {practice && (
+                <button className="pss-btn-back" onClick={stopDetection}>
+                  ← Back to Learning
+                </button>
               )}
 
-              {practice && probability <= 0.7 && landmarkClass === SignData[id - 1].name && (
-                <Result status="warning" title="Almost there!" subTitle="Try to match the pose more closely." />
-              )}
+              <div className="pss-tip">
+                Tip: Hold your hand steady and ensure good lighting for better detection accuracy.
+              </div>
+            </div>
+          </div>
 
-              {landmarkClass !== SignData[id - 1].name && !learn && (
-                <Result status="error" title="Try Again!" subTitle="Your sign doesn’t match yet." />
-              )}
-
-              {!learn && (
-                <Button danger size="middle" onClick={stopDetection} className="mt-4">
-                  Back to Learning
-                </Button>
-              )}
-            </Card>
-          </Col>
-        </Row>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }

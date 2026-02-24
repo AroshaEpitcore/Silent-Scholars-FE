@@ -1,18 +1,12 @@
-import React, { useEffect, useState } from "react";
+import React, { useRef, useState } from "react";
 import Webcam from "react-webcam";
-import { useRef } from "react";
 import * as hands from "@mediapipe/hands";
 import * as cam from "@mediapipe/camera_utils";
 import { Hands } from "@mediapipe/hands";
 import axios from "axios";
-import { Image } from 'antd';
-import 'antd/dist/antd.css';
-import { SmileOutlined, SendOutlined, PlayCircleOutlined, VideoCameraOutlined } from '@ant-design/icons';
-import { Button, Result, PageHeader } from 'antd';
-import { Col, Row } from 'antd';
-import Test from './Test';
-import { StaticSignData } from '../../../Data/StaticSignData';
+import { StaticSignData } from "../../../Data/StaticSignData";
 import { useNavigate } from "react-router-dom";
+import "./learn-static-sign.css";
 
 let time = 0;
 let landmarks = null;
@@ -29,28 +23,21 @@ export default function LearnStaticSign() {
   const [isStarted, setIsStarted] = useState(false);
   const [isCameraOn, setIsCameraOn] = useState(true);
   const [cameraData, setCameraData] = useState(null);
-  const [SignData, setSignData] = useState(StaticSignData);
-
+  const [SignData] = useState(StaticSignData);
   const [landmarkClass, setLandmarkClass] = useState("none");
   const [probability, setProbability] = useState(0);
-  //use state for current step
-  const [currentStep, setCurrentStep] = React.useState(0);
+  const [currentStep, setCurrentStep] = useState(0);
 
-  // use navigate
-  let navigate = useNavigate();
+  const navigate = useNavigate();
 
   const routePractice = () => {
-    let path = `/practise-static-sign/${SignData[currentStep].id}`;
-    navigate(path);
-  }
+    navigate(`/practise-static-sign/${SignData[currentStep].id}`);
+  };
 
-  //back to home
   const routeHome = () => {
-    let path = `/static-sign-dashboard`;
-    navigate(path);
-  }
+    navigate(`/static-sign-dashboard`);
+  };
 
-  //on click start learning
   const onClickStart = () => {
     setLearn(false);
     setPractice(true);
@@ -58,146 +45,187 @@ export default function LearnStaticSign() {
   };
 
   async function onResults(results) {
-    // console.log(results)
-
-    // const video = webcamRef.current.video;
     const videoWidth = webcamRef.current.video.videoWidth;
     const videoHeight = webcamRef.current.video.videoHeight;
-
-    // Set canvas width
     canvasRef.current.width = videoWidth;
     canvasRef.current.height = videoHeight;
-
     const canvasElement = canvasRef.current;
-    const canvasCtx = canvasElement.getContext('2d');
+    const canvasCtx = canvasElement.getContext("2d");
     canvasCtx.save();
     canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
     canvasCtx.drawImage(results.image, 0, 0, canvasElement.width, canvasElement.height);
-
     let totalLandmarks = [];
-
     if (results.multiHandLandmarks) {
-      // console.log(results.multiHandLandmarks)
       for (const landmarks of results.multiHandLandmarks) {
-        connect(canvasCtx, landmarks, hands.HAND_CONNECTIONS, {
-          color: '#00FF00',
-          lineWidth: 5
-        });
-        connect(canvasCtx, landmarks, { color: '#FF0000', lineWidth: 2 });
-
+        connect(canvasCtx, landmarks, hands.HAND_CONNECTIONS, { color: "#00FF00", lineWidth: 5 });
+        connect(canvasCtx, landmarks, { color: "#FF0000", lineWidth: 2 });
         await landmarks.map((item) => {
           totalLandmarks.push(item.x);
           totalLandmarks.push(item.y);
           totalLandmarks.push(item.z);
         });
       }
-      const data = {
-        // filename: 'test.csv',
-        // className: 'Five'.toString(),
-        temp: totalLandmarks
-      };
-
+      const data = { temp: totalLandmarks };
       if (totalLandmarks.length === 63) {
-        // const result = await axios.post('http://127.0.0.1:5000/predict-test', data);
         console.log(result);
         setPredictData(result.data);
       }
-      // console.log(totalLandmarks.length);
-      // console.log(totalLandmarks);
     }
-
-    //extract hand landmarks
-
     canvasCtx.restore();
   }
-  // }
 
   const startDetection = () => {
-    // handleLeftDrawerToggle();
     setIsStarted(true);
     setIsCameraOn(true);
     const hands = new Hands({
-      locateFile: (file) => {
-        return `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`;
-      }
+      locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`,
     });
-
     hands.setOptions({
       maxNumHands: 2,
       modelComplexity: 1,
       minDetectionConfidence: 0.5,
-      minTrackingConfidence: 0.5
+      minTrackingConfidence: 0.5,
     });
-
     hands.onResults(onResults);
-    if (typeof webcamRef.current !== 'undefined' && webcamRef.current !== null) {
+    if (webcamRef.current !== null) {
       camera = new cam.Camera(webcamRef.current.video, {
         onFrame: async () => {
           try {
             await hands.send({ image: webcamRef.current.video });
-          } catch (error) { }
+          } catch (error) {}
         },
         width: 640,
-        height: 480
+        height: 480,
       });
       camera.start();
       setCameraData(camera);
     }
   };
-  // ================================
+
   const stopDetection = () => {
     camera.stop();
     setIsStarted(false);
     setIsCameraOn(false);
   };
+
+  const total = SignData.length;
+  const progressPct = Math.round(((currentStep + 1) / total) * 100);
+  const current = SignData[currentStep];
+
   return (
-    <>
-      <PageHeader
-        className="site-page-header"
-        onBack={() => routeHome()}
-        title="Static Sign"
-        subTitle="Learn a static sign"
-        style={{ border: '1px solid rgb(235, 237, 240)' }}
-      />
-      <Row justify="center" align="middle" style={{ marginTop: '50px' }}>
-        <Col span={8} align="center" justify="center">
-          <Image
-            width={400}
-            src={SignData[currentStep].alphabetImage} //display the letter
-          />
-        </Col>
-        <Col span={8} align="center" justify="center">
-          <Image
-            width={320}
-            src={SignData[currentStep].signImage} //display the sign of the displayed letter
-          />
+    <div className="lss-page">
+      <div className="lss-container">
 
-        </Col>
-        <Col span={8} align="center" justify="center">
-          <Result
-            icon={<PlayCircleOutlined />}
-            title="Click Start to Practice this Sign"
-            extra={<Button type="primary" onClick={routePractice}>Start</Button>}
-          />
+        {/* ── Header ── */}
+        <div className="lss-header">
+          <button className="lss-back-btn" onClick={routeHome}>
+            ← Back
+          </button>
+          <div className="lss-header-info">
+            <h1>Static Sign Language</h1>
+            <p>Learn the hand sign for each letter of the alphabet</p>
+          </div>
+          <div className="lss-header-progress">
+            <div className="lss-progress-bar-wrap">
+              <div className="lss-progress-bar-fill" style={{ width: `${progressPct}%` }} />
+            </div>
+            <div className="lss-step-badge">
+              {currentStep + 1} / {total}
+            </div>
+          </div>
+        </div>
 
-          {currentStep < SignData.length - 1 ? (
-          <Button type="primary" danger shape="round" icon={<SendOutlined />} size={'large'} onClick={() => setCurrentStep(currentStep + 1)}>
-            Learn Next Sign
-          </Button>
-        ) : (
-          <Button type="primary" danger shape="round" icon={<SendOutlined />} size={'large'} onClick={routeHome}>
-            Back to Home
-          </Button>
-        )}
+        {/* ── Main 3-column grid ── */}
+        <div className="lss-main-grid">
 
+          {/* Left — Alphabet letter */}
+          <div className="lss-card">
+            <div className="lss-card-header">Letter</div>
+            <div className="lss-card-body">
+              <div className="lss-img-box">
+                <img src={current.alphabetImage} alt={`Letter ${current.name}`} />
+              </div>
+              <div className="lss-img-label">Alphabet — {current.name}</div>
+            </div>
+          </div>
 
+          {/* Middle — Hand sign */}
+          <div className="lss-card">
+            <div className="lss-card-header">Hand Sign</div>
+            <div className="lss-card-body">
+              <div className="lss-img-box">
+                <img src={current.signImage} alt={`Sign for ${current.name}`} />
+              </div>
+              <div className="lss-img-label">Sign for "{current.name}"</div>
+            </div>
+          </div>
 
+          {/* Right — Controls */}
+          <div className="lss-card">
+            <div className="lss-card-header">Practice</div>
+            <div className="lss-card-body">
+              <div className="lss-sign-name">{current.name}</div>
+              <div className="lss-sign-subtitle">Current Sign</div>
 
+              <button className="lss-btn-practice" onClick={routePractice}>
+                ▶ Practice This Sign
+              </button>
 
+              <div className="lss-nav-row">
+                <button
+                  className="lss-btn-nav"
+                  onClick={() => setCurrentStep(currentStep - 1)}
+                  disabled={currentStep === 0}
+                >
+                  ← Prev
+                </button>
 
+                {currentStep < total - 1 ? (
+                  <button
+                    className="lss-btn-nav lss-btn-nav--next"
+                    onClick={() => setCurrentStep(currentStep + 1)}
+                  >
+                    Next →
+                  </button>
+                ) : (
+                  <button
+                    className="lss-btn-nav lss-btn-nav--next"
+                    onClick={routeHome}
+                  >
+                    Done ✓
+                  </button>
+                )}
+              </div>
 
-        </Col>
-      </Row>
-    </>
+              <div className="lss-tip">
+                Tip: Study the reference image carefully, then click <strong>Practice</strong> to test yourself with the camera.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* ── Letter strip ── */}
+        <div className="lss-letter-strip">
+          <span className="lss-strip-label">All Signs</span>
+          {SignData.map((sign, idx) => (
+            <button
+              key={sign.id}
+              className={`lss-letter-dot ${
+                idx === currentStep
+                  ? "lss-letter-dot--active"
+                  : idx < currentStep
+                  ? "lss-letter-dot--done"
+                  : ""
+              }`}
+              onClick={() => setCurrentStep(idx)}
+              title={`Sign ${sign.name}`}
+            >
+              {sign.name}
+            </button>
+          ))}
+        </div>
+
+      </div>
+    </div>
   );
 }

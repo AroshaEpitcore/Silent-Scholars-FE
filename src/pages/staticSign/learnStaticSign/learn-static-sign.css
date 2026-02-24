@@ -1,0 +1,395 @@
+/* Learn Static Sign Page - Clean Compact Layout */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Poppins:wght@300;400;500;600;700;800;900&display=swap');
+
+:root {
+  --lss-primary:  linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --lss-accent:   linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  --lss-success:  linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+  --lss-warning:  linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+  --lss-text:     #2d3748;
+  --lss-muted:    #4a5568;
+  --lss-light:    #718096;
+  --lss-white:    #ffffff;
+  --lss-shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
+  --lss-shadow-md: 0 4px 12px rgba(0,0,0,0.10);
+  --lss-shadow-lg: 0 8px 24px rgba(0,0,0,0.13);
+}
+
+/* ── Page ── */
+.lss-page {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f0f4ff 0%, #e8ecf4 100%);
+  padding: 1.25rem;
+  font-family: 'Inter', sans-serif;
+}
+
+.lss-container {
+  max-width: 1300px;
+  margin: 0 auto;
+}
+
+/* ── Header ── */
+.lss-header {
+  background: var(--lss-white);
+  border-radius: 16px;
+  box-shadow: var(--lss-shadow-md);
+  border: 1px solid rgba(0,0,0,0.04);
+  padding: 0.9rem 1.25rem;
+  margin-bottom: 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.lss-header::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: var(--lss-primary);
+}
+
+.lss-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0.9rem;
+  border-radius: 8px;
+  background: #f8fafc;
+  border: 1.5px solid #e2e8f0;
+  color: var(--lss-muted);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-decoration: none;
+  flex-shrink: 0;
+}
+
+.lss-back-btn:hover {
+  background: var(--lss-white);
+  border-color: #cbd5e0;
+  color: var(--lss-text);
+}
+
+.lss-header-info {
+  flex: 1;
+}
+
+.lss-header-info h1 {
+  font-family: 'Poppins', sans-serif;
+  font-size: 1.15rem;
+  font-weight: 800;
+  background: var(--lss-primary);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin: 0;
+  line-height: 1.2;
+}
+
+.lss-header-info p {
+  font-size: 0.75rem;
+  color: var(--lss-light);
+  margin: 0;
+}
+
+.lss-header-progress {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-shrink: 0;
+}
+
+.lss-step-badge {
+  background: var(--lss-primary);
+  color: var(--lss-white);
+  border-radius: 20px;
+  padding: 0.3rem 0.9rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  font-family: 'Poppins', sans-serif;
+}
+
+/* ── Progress bar ── */
+.lss-progress-bar-wrap {
+  height: 5px;
+  background: #edf2f7;
+  border-radius: 3px;
+  overflow: hidden;
+  width: 120px;
+}
+
+.lss-progress-bar-fill {
+  height: 100%;
+  background: var(--lss-accent);
+  border-radius: 3px;
+  transition: width 0.4s ease;
+}
+
+/* ── Main grid ── */
+.lss-main-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 300px;
+  gap: 1.25rem;
+  align-items: start;
+}
+
+/* ── Card base ── */
+.lss-card {
+  background: var(--lss-white);
+  border-radius: 16px;
+  box-shadow: var(--lss-shadow-md);
+  border: 1px solid rgba(0,0,0,0.04);
+  overflow: hidden;
+  transition: box-shadow 0.2s;
+}
+
+.lss-card:hover {
+  box-shadow: var(--lss-shadow-lg);
+}
+
+.lss-card-header {
+  background: var(--lss-primary);
+  color: var(--lss-white);
+  padding: 0.75rem 1.25rem;
+  font-weight: 700;
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.88rem;
+  letter-spacing: 0.3px;
+}
+
+.lss-card-body {
+  padding: 1.25rem;
+}
+
+/* ── Image display boxes ── */
+.lss-img-box {
+  min-height: 260px;
+  background: #f8fafc;
+  border: 2px dashed rgba(79,172,254,0.25);
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  transition: border-color 0.3s;
+}
+
+.lss-img-box:hover {
+  border-color: #4facfe;
+}
+
+.lss-img-box img {
+  max-width: 100%;
+  max-height: 240px;
+  object-fit: contain;
+  border-radius: 8px;
+}
+
+.lss-img-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--lss-light);
+  text-align: center;
+  margin-top: 0.6rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* ── Right panel ── */
+.lss-sign-name {
+  font-family: 'Poppins', sans-serif;
+  font-size: 4rem;
+  font-weight: 900;
+  text-align: center;
+  background: var(--lss-primary);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  line-height: 1;
+  margin-bottom: 0.25rem;
+}
+
+.lss-sign-subtitle {
+  text-align: center;
+  font-size: 0.78rem;
+  color: var(--lss-light);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  margin-bottom: 1.25rem;
+}
+
+/* ── Practice CTA button ── */
+.lss-btn-practice {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.8rem;
+  border-radius: 10px;
+  background: var(--lss-accent);
+  border: none;
+  color: var(--lss-white);
+  font-size: 0.9rem;
+  font-weight: 700;
+  font-family: 'Poppins', sans-serif;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: var(--lss-shadow-sm);
+  margin-bottom: 0.75rem;
+  text-decoration: none;
+}
+
+.lss-btn-practice:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--lss-shadow-md);
+  color: var(--lss-white);
+}
+
+/* ── Nav buttons ── */
+.lss-nav-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.6rem;
+}
+
+.lss-btn-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.6rem;
+  border-radius: 10px;
+  border: 1.5px solid #e2e8f0;
+  background: #f8fafc;
+  color: var(--lss-muted);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.lss-btn-nav:hover:not(:disabled) {
+  background: var(--lss-white);
+  border-color: #667eea;
+  color: #667eea;
+  box-shadow: var(--lss-shadow-sm);
+}
+
+.lss-btn-nav:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.lss-btn-nav--next {
+  background: var(--lss-primary);
+  border-color: transparent;
+  color: var(--lss-white);
+}
+
+.lss-btn-nav--next:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: var(--lss-shadow-md);
+  color: var(--lss-white);
+  border-color: transparent;
+}
+
+/* ── Tip box ── */
+.lss-tip {
+  margin-top: 0.75rem;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 10px;
+  padding: 0.65rem 0.75rem;
+  font-size: 0.75rem;
+  color: #1e40af;
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+/* ── Letter strip ── */
+.lss-letter-strip {
+  background: var(--lss-white);
+  border-radius: 16px;
+  box-shadow: var(--lss-shadow-md);
+  border: 1px solid rgba(0,0,0,0.04);
+  padding: 0.9rem 1.25rem;
+  margin-top: 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.lss-strip-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--lss-light);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-right: 0.25rem;
+  flex-shrink: 0;
+}
+
+.lss-letter-dot {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  border: 1.5px solid #e2e8f0;
+  background: #f8fafc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--lss-muted);
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: 'Poppins', sans-serif;
+}
+
+.lss-letter-dot:hover {
+  border-color: #667eea;
+  color: #667eea;
+  background: var(--lss-white);
+}
+
+.lss-letter-dot--active {
+  background: var(--lss-primary);
+  border-color: transparent;
+  color: var(--lss-white);
+  box-shadow: var(--lss-shadow-sm);
+}
+
+.lss-letter-dot--done {
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+  color: #16a34a;
+}
+
+/* ── Responsive ── */
+@media (max-width: 960px) {
+  .lss-main-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  .lss-main-grid > .lss-card:nth-child(3) {
+    grid-column: 1 / -1;
+  }
+  .lss-sign-name { font-size: 3rem; }
+  .lss-nav-row { grid-template-columns: repeat(4, 1fr); }
+  .lss-btn-practice { margin-bottom: 0; }
+}
+
+@media (max-width: 650px) {
+  .lss-page { padding: 0.75rem; }
+  .lss-main-grid { grid-template-columns: 1fr; }
+  .lss-main-grid > .lss-card:nth-child(3) { grid-column: unset; }
+  .lss-header { flex-wrap: wrap; }
+  .lss-header-progress { width: 100%; }
+  .lss-progress-bar-wrap { flex: 1; }
+  .lss-nav-row { grid-template-columns: 1fr 1fr; }
+}

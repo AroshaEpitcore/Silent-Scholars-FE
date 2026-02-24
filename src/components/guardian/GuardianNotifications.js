@@ -1,18 +1,28 @@
 import React, { useState, useEffect } from 'react';
 import { auth, db } from '../../firebase';
-import { doc, getDoc, updateDoc, collection, query, where, getDocs, addDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, updateDoc, collection, query, where, getDocs, serverTimestamp } from 'firebase/firestore';
 import GuardianDataService from '../../services/GuardianDataService';
-import './guardian-dashboard.css';
-import { 
-  FaBell, 
-  FaExclamationTriangle, 
-  FaCheckCircle, 
-  FaInfoCircle, 
+import './guardian-notifications.css';
+import {
+  FaBell,
+  FaExclamationTriangle,
+  FaCheckCircle,
+  FaInfoCircle,
   FaTimes,
   FaTrophy,
   FaChartLine,
-  FaClock
+  FaClock,
 } from 'react-icons/fa';
+
+const ICON_MAP = {
+  achievement:    { icon: <FaTrophy />,             cls: 'gn-notif-icon--achievement' },
+  performance:    { icon: <FaExclamationTriangle />, cls: 'gn-notif-icon--performance' },
+  milestone:      { icon: <FaCheckCircle />,         cls: 'gn-notif-icon--milestone'   },
+  goal:           { icon: <FaChartLine />,            cls: 'gn-notif-icon--goal'        },
+  recommendation: { icon: <FaInfoCircle />,           cls: 'gn-notif-icon--goal'        },
+};
+
+const PRIORITY_CLS = { high: 'gn-notif-item--high', medium: 'gn-notif-item--medium', low: 'gn-notif-item--low' };
 
 const GuardianNotifications = () => {
   const [notifications, setNotifications] = useState([]);
@@ -20,9 +30,7 @@ const GuardianNotifications = () => {
   const [childInfo, setChildInfo] = useState(null);
   const [message, setMessage] = useState('');
 
-  useEffect(() => {
-    loadNotifications();
-  }, []);
+  useEffect(() => { loadNotifications(); }, []);
 
   const loadNotifications = async () => {
     try {
@@ -30,30 +38,22 @@ const GuardianNotifications = () => {
       const user = auth.currentUser;
       if (!user) return;
 
-      // Load child info
       const childData = await GuardianDataService.getChildInfo();
       setChildInfo(childData);
 
-      // Load notifications from Firestore
-      const notificationsQuery = query(
+      const q = query(
         collection(db, 'guardianNotifications'),
         where('userId', '==', user.uid),
         where('active', '==', true)
       );
-      const snapshot = await getDocs(notificationsQuery);
-      
-      const notificationsData = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-        timestamp: doc.data().timestamp?.toDate() || new Date()
-      }));
+      const snapshot = await getDocs(q);
+      const list = snapshot.docs
+        .map(d => ({ id: d.id, ...d.data(), timestamp: d.data().timestamp?.toDate() || new Date() }))
+        .sort((a, b) => b.timestamp - a.timestamp);
 
-      // Sort by timestamp (newest first)
-      notificationsData.sort((a, b) => b.timestamp - a.timestamp);
-      
-      setNotifications(notificationsData);
-    } catch (error) {
-      console.error('Error loading notifications:', error);
+      setNotifications(list);
+    } catch (err) {
+      console.error(err);
       setMessage('Error loading notifications');
     } finally {
       setLoading(false);
@@ -62,341 +62,229 @@ const GuardianNotifications = () => {
 
   const markAsRead = async (id) => {
     try {
-      const user = auth.currentUser;
-      if (!user) return;
-
-      // Update in Firestore
-      const notificationRef = doc(db, 'guardianNotifications', id);
-      await updateDoc(notificationRef, {
-        read: true,
-        readAt: serverTimestamp()
-      });
-
-      // Update local state
-      setNotifications(prev => 
-        prev.map(notification => 
-          notification.id === id 
-            ? { ...notification, read: true }
-            : notification
-        )
-      );
-    } catch (error) {
-      console.error('Error marking notification as read:', error);
-    }
+      await updateDoc(doc(db, 'guardianNotifications', id), { read: true, readAt: serverTimestamp() });
+      setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
+    } catch (err) { console.error(err); }
   };
 
   const deleteNotification = async (id) => {
     try {
-      const user = auth.currentUser;
-      if (!user) return;
-
-      // Mark as inactive in Firestore (soft delete)
-      const notificationRef = doc(db, 'guardianNotifications', id);
-      await updateDoc(notificationRef, {
-        active: false,
-        deletedAt: serverTimestamp()
-      });
-
-      // Remove from local state
-      setNotifications(prev => 
-        prev.filter(notification => notification.id !== id)
-      );
-    } catch (error) {
-      console.error('Error deleting notification:', error);
-    }
+      await updateDoc(doc(db, 'guardianNotifications', id), { active: false, deletedAt: serverTimestamp() });
+      setNotifications(prev => prev.filter(n => n.id !== id));
+    } catch (err) { console.error(err); }
   };
 
   const markAllAsRead = async () => {
     try {
-      const user = auth.currentUser;
-      if (!user) return;
-
-      const unreadNotifications = notifications.filter(n => !n.read);
-      
-      // Update all unread notifications in Firestore
-      const updatePromises = unreadNotifications.map(notification => {
-        const notificationRef = doc(db, 'guardianNotifications', notification.id);
-        return updateDoc(notificationRef, {
-          read: true,
-          readAt: serverTimestamp()
-        });
-      });
-
-      await Promise.all(updatePromises);
-
-      // Update local state
-      setNotifications(prev => 
-        prev.map(notification => ({ ...notification, read: true }))
-      );
-    } catch (error) {
-      console.error('Error marking all notifications as read:', error);
-    }
+      const unread = notifications.filter(n => !n.read);
+      await Promise.all(unread.map(n =>
+        updateDoc(doc(db, 'guardianNotifications', n.id), { read: true, readAt: serverTimestamp() })
+      ));
+      setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+    } catch (err) { console.error(err); }
   };
 
-  const clearAllNotifications = async () => {
+  const clearAll = async () => {
     try {
-      const user = auth.currentUser;
-      if (!user) return;
-
-      // Mark all notifications as inactive in Firestore
-      const updatePromises = notifications.map(notification => {
-        const notificationRef = doc(db, 'guardianNotifications', notification.id);
-        return updateDoc(notificationRef, {
-          active: false,
-          deletedAt: serverTimestamp()
-        });
-      });
-
-      await Promise.all(updatePromises);
-
-      // Clear local state
+      await Promise.all(notifications.map(n =>
+        updateDoc(doc(db, 'guardianNotifications', n.id), { active: false, deletedAt: serverTimestamp() })
+      ));
       setNotifications([]);
-    } catch (error) {
-      console.error('Error clearing all notifications:', error);
-    }
+    } catch (err) { console.error(err); }
   };
 
-  const formatTimeAgo = (timestamp) => {
-    const now = new Date();
-    const diffInSeconds = Math.floor((now - timestamp) / 1000);
-    
-    if (diffInSeconds < 60) return 'Just now';
-    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} minutes ago`;
-    if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} hours ago`;
-    if (diffInSeconds < 2592000) return `${Math.floor(diffInSeconds / 86400)} days ago`;
-    return timestamp.toLocaleDateString();
-  };
-
-  const getNotificationIcon = (type) => {
-    switch (type) {
-      case 'achievement':
-        return <FaTrophy className="text-warning" />;
-      case 'performance':
-        return <FaExclamationTriangle className="text-danger" />;
-      case 'milestone':
-        return <FaCheckCircle className="text-success" />;
-      case 'goal':
-        return <FaChartLine className="text-info" />;
-      case 'recommendation':
-        return <FaInfoCircle className="text-primary" />;
-      default:
-        return <FaBell className="text-muted" />;
-    }
-  };
-
-  const getPriorityClass = (priority) => {
-    switch (priority) {
-      case 'high':
-        return 'border-danger';
-      case 'medium':
-        return 'border-warning';
-      case 'low':
-        return 'border-success';
-      default:
-        return 'border-muted';
-    }
+  const formatTimeAgo = (ts) => {
+    const diff = Math.floor((new Date() - ts) / 1000);
+    if (diff < 60)      return 'Just now';
+    if (diff < 3600)    return `${Math.floor(diff / 60)}m ago`;
+    if (diff < 86400)   return `${Math.floor(diff / 3600)}h ago`;
+    if (diff < 2592000) return `${Math.floor(diff / 86400)}d ago`;
+    return ts.toLocaleDateString();
   };
 
   const unreadCount = notifications.filter(n => !n.read).length;
+  const highCount   = notifications.filter(n => n.priority === 'high').length;
+  const achCount    = notifications.filter(n => n.type === 'achievement').length;
+  const mileCount   = notifications.filter(n => n.type === 'milestone').length;
 
+  /* ── Loading ── */
   if (loading) {
     return (
-      <div className="guardian-dashboard">
-        <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '50vh' }}>
-          <div className="text-center">
-            <div className="spinner-border text-primary" role="status">
-              <span className="visually-hidden">Loading...</span>
-            </div>
-            <p className="mt-3">Loading notifications...</p>
+      <div className="gn-page">
+        <div className="gn-loading">
+          <div className="spinner-border text-primary" role="status">
+            <span className="visually-hidden">Loading…</span>
           </div>
+          <p>Loading notifications…</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="guardian-dashboard">
-      {/* Header */}
-      <div className="guardian-header">
-        <div className="d-flex justify-content-between align-items-center">
-          <div>
+    <div className="gn-page">
+      <div className="gn-container">
+
+        {/* ── Header ── */}
+        <div className="gn-header">
+          <div className="gn-header-icon"><FaBell /></div>
+          <div className="gn-header-info">
             <h1>Notifications</h1>
             <p>Stay updated on {childInfo?.name || "your child's"} learning progress</p>
           </div>
           {message && (
-            <div className={`alert ${message.includes('Error') ? 'alert-danger' : 'alert-success'} mb-0`}>
+            <span style={{ fontSize: '0.78rem', color: message.includes('Error') ? '#ef4444' : '#16a34a', fontWeight: 600 }}>
               {message}
-            </div>
+            </span>
           )}
-          <div className="d-flex gap-2">
-            <button 
-              className="btn btn-light" 
-              onClick={markAllAsRead}
-              disabled={unreadCount === 0}
-            >
+          <div className="gn-header-actions">
+            <button className="gn-btn gn-btn--primary" onClick={markAllAsRead} disabled={unreadCount === 0}>
               <FaCheckCircle /> Mark All Read
             </button>
-            <button 
-              className="btn btn-outline-light"
-              onClick={clearAllNotifications}
-              disabled={notifications.length === 0}
-            >
+            <button className="gn-btn gn-btn--outline" onClick={clearAll} disabled={notifications.length === 0}>
               <FaTimes /> Clear All
             </button>
           </div>
         </div>
-      </div>
 
-      {/* Notification Stats */}
-      <div className="child-info-card">
-        <div className="row text-center">
-          <div className="col-md-3">
-            <div className="stat-value text-danger">{unreadCount}</div>
-            <div className="stat-label">Unread</div>
+        {/* ── Stats row ── */}
+        <div className="gn-stats">
+          <div className="gn-stat">
+            <div className="gn-stat-value gn-stat-value--danger">{unreadCount}</div>
+            <div className="gn-stat-label">Unread</div>
           </div>
-          <div className="col-md-3">
-            <div className="stat-value text-warning">
-              {notifications.filter(n => n.priority === 'high').length}
-            </div>
-            <div className="stat-label">High Priority</div>
+          <div className="gn-stat">
+            <div className="gn-stat-value gn-stat-value--warning">{highCount}</div>
+            <div className="gn-stat-label">High Priority</div>
           </div>
-          <div className="col-md-3">
-            <div className="stat-value text-info">
-              {notifications.filter(n => n.type === 'achievement').length}
-            </div>
-            <div className="stat-label">Achievements</div>
+          <div className="gn-stat">
+            <div className="gn-stat-value gn-stat-value--accent">{achCount}</div>
+            <div className="gn-stat-label">Achievements</div>
           </div>
-          <div className="col-md-3">
-            <div className="stat-value text-success">
-              {notifications.filter(n => n.type === 'milestone').length}
-            </div>
-            <div className="stat-label">Milestones</div>
+          <div className="gn-stat">
+            <div className="gn-stat-value gn-stat-value--success">{mileCount}</div>
+            <div className="gn-stat-label">Milestones</div>
           </div>
         </div>
-      </div>
 
-      {/* Notifications List */}
-      <div className="activities-section">
-        <h3 className="mb-3">
-          <FaBell className="me-2" />
-          Recent Notifications
-        </h3>
-        
-        {notifications.length === 0 ? (
-          <div className="text-center py-5">
-            <FaBell size={48} className="text-muted mb-3" />
-            <h4 className="text-muted">No notifications yet</h4>
-            <p className="text-muted">You'll see important updates about your child's progress here.</p>
-          </div>
-        ) : (
-          <div className="notifications-list">
-            {notifications.map((notification) => (
-              <div 
-                key={notification.id} 
-                className={`notification-item card mb-3 ${getPriorityClass(notification.priority)} ${!notification.read ? 'border-start border-4' : ''}`}
-              >
-                <div className="card-body">
-                  <div className="d-flex align-items-start">
-                    <div className="notification-icon me-3 mt-1">
-                      {getNotificationIcon(notification.type)}
-                    </div>
-                    <div className="flex-grow-1">
-                      <div className="d-flex justify-content-between align-items-start">
-                        <div>
-                          <h6 className={`card-title mb-1 ${!notification.read ? 'fw-bold' : ''}`}>
-                            {notification.title}
-                          </h6>
-                          <p className="card-text text-muted mb-2">
-                            {notification.message}
-                          </p>
-                          <div className="d-flex align-items-center text-muted small">
-                            <FaClock className="me-1" />
-                            {formatTimeAgo(notification.timestamp)}
-                          </div>
-                        </div>
-                        <div className="d-flex gap-1">
-                          {!notification.read && (
-                            <button 
-                              className="btn btn-sm btn-outline-primary"
-                              onClick={() => markAsRead(notification.id)}
-                            >
-                              Mark Read
-                            </button>
-                          )}
-                          <button 
-                            className="btn btn-sm btn-outline-danger"
-                            onClick={() => deleteNotification(notification.id)}
-                          >
-                            <FaTimes />
-                          </button>
+        {/* ── 2-col grid ── */}
+        <div className="gn-main-grid">
+
+          {/* Notifications list */}
+          <div className="gn-card">
+            <div className="gn-card-header">
+              <span><FaBell style={{ marginRight: '0.4rem' }} />Recent Notifications</span>
+              {unreadCount > 0 && (
+                <span style={{ background: 'rgba(255,255,255,0.25)', borderRadius: '20px', padding: '0.1rem 0.6rem', fontSize: '0.75rem' }}>
+                  {unreadCount} new
+                </span>
+              )}
+            </div>
+            <div className="gn-card-body">
+              {notifications.length === 0 ? (
+                <div className="gn-empty">
+                  <div className="gn-empty-icon"><FaBell /></div>
+                  <p>No notifications yet</p>
+                  <span>You'll see important updates about learning progress here.</span>
+                </div>
+              ) : (
+                notifications.map((n) => {
+                  const iconInfo = ICON_MAP[n.type] || { icon: <FaBell />, cls: 'gn-notif-icon--default' };
+                  return (
+                    <div
+                      key={n.id}
+                      className={`gn-notif-item ${!n.read ? 'gn-notif-item--unread' : ''} ${PRIORITY_CLS[n.priority] || ''}`}
+                    >
+                      {/* Icon */}
+                      <div className={`gn-notif-icon ${iconInfo.cls}`}>
+                        {iconInfo.icon}
+                      </div>
+
+                      {/* Body */}
+                      <div className="gn-notif-body">
+                        <div className="gn-notif-title">{n.title}</div>
+                        <div className="gn-notif-msg">{n.message}</div>
+                        <div className="gn-notif-time">
+                          <FaClock style={{ fontSize: '0.65rem' }} />
+                          {formatTimeAgo(n.timestamp)}
                         </div>
                       </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
 
-      {/* Notification Preferences */}
-      <div className="progress-section">
-        <h3 className="mb-3">
-          <FaBell className="me-2" />
-          Notification Preferences
-        </h3>
-        <div className="row">
-          <div className="col-md-6">
-            <div className="card">
-              <div className="card-body">
-                <h6 className="card-title">Email Notifications</h6>
-                <div className="form-check mb-2">
-                  <input className="form-check-input" type="checkbox" id="emailAchievements" defaultChecked />
-                  <label className="form-check-label" htmlFor="emailAchievements">
-                    Achievement alerts
-                  </label>
-                </div>
-                <div className="form-check mb-2">
-                  <input className="form-check-input" type="checkbox" id="emailPerformance" defaultChecked />
-                  <label className="form-check-label" htmlFor="emailPerformance">
-                    Performance alerts
-                  </label>
-                </div>
-                <div className="form-check">
-                  <input className="form-check-input" type="checkbox" id="emailWeekly" defaultChecked />
-                  <label className="form-check-label" htmlFor="emailWeekly">
-                    Weekly reports
-                  </label>
-                </div>
-              </div>
+                      {/* Unread dot */}
+                      {!n.read && <div className="gn-unread-dot" />}
+
+                      {/* Actions */}
+                      <div className="gn-notif-actions">
+                        {!n.read && (
+                          <button
+                            className="gn-btn gn-btn--ghost gn-btn--ghost-blue"
+                            onClick={() => markAsRead(n.id)}
+                            title="Mark as read"
+                          >
+                            ✓
+                          </button>
+                        )}
+                        <button
+                          className="gn-btn gn-btn--ghost gn-btn--ghost-red"
+                          onClick={() => deleteNotification(n.id)}
+                          title="Delete"
+                        >
+                          <FaTimes />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
             </div>
           </div>
-          <div className="col-md-6">
-            <div className="card">
-              <div className="card-body">
-                <h6 className="card-title">Push Notifications</h6>
-                <div className="form-check mb-2">
-                  <input className="form-check-input" type="checkbox" id="pushAchievements" defaultChecked />
-                  <label className="form-check-label" htmlFor="pushAchievements">
-                    Achievement alerts
-                  </label>
-                </div>
-                <div className="form-check mb-2">
-                  <input className="form-check-input" type="checkbox" id="pushPerformance" />
-                  <label className="form-check-label" htmlFor="pushPerformance">
-                    Performance alerts
-                  </label>
-                </div>
-                <div className="form-check">
-                  <input className="form-check-input" type="checkbox" id="pushMilestones" defaultChecked />
-                  <label className="form-check-label" htmlFor="pushMilestones">
-                    Milestone celebrations
-                  </label>
-                </div>
+
+          {/* Preferences */}
+          <div className="gn-card">
+            <div className="gn-card-header">
+              <span>Preferences</span>
+            </div>
+            <div className="gn-card-body">
+
+              {/* Email */}
+              <div className="gn-pref-group">
+                <div className="gn-pref-group-title">Email Notifications</div>
+                {[
+                  { id: 'email-ach',  label: 'Achievement alerts',  defaultChecked: true  },
+                  { id: 'email-perf', label: 'Performance alerts',  defaultChecked: true  },
+                  { id: 'email-week', label: 'Weekly reports',      defaultChecked: true  },
+                ].map(item => (
+                  <div className="gn-pref-item" key={item.id}>
+                    <label className="gn-pref-label" htmlFor={item.id}>{item.label}</label>
+                    <label className="gn-toggle">
+                      <input type="checkbox" id={item.id} defaultChecked={item.defaultChecked} />
+                      <span className="gn-toggle-slider" />
+                    </label>
+                  </div>
+                ))}
               </div>
+
+              {/* Push */}
+              <div className="gn-pref-group">
+                <div className="gn-pref-group-title">Push Notifications</div>
+                {[
+                  { id: 'push-ach',   label: 'Achievement alerts',      defaultChecked: true  },
+                  { id: 'push-perf',  label: 'Performance alerts',      defaultChecked: false },
+                  { id: 'push-mile',  label: 'Milestone celebrations',  defaultChecked: true  },
+                ].map(item => (
+                  <div className="gn-pref-item" key={item.id}>
+                    <label className="gn-pref-label" htmlFor={item.id}>{item.label}</label>
+                    <label className="gn-toggle">
+                      <input type="checkbox" id={item.id} defaultChecked={item.defaultChecked} />
+                      <span className="gn-toggle-slider" />
+                    </label>
+                  </div>
+                ))}
+              </div>
+
             </div>
           </div>
+
         </div>
       </div>
     </div>

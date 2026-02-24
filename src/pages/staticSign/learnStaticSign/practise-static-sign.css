@@ -1,0 +1,401 @@
+/* Practise Static Sign Page - Clean Compact Layout */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Poppins:wght@300;400;500;600;700;800;900&display=swap');
+
+:root {
+  --pss-primary:  linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --pss-accent:   linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  --pss-success:  linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+  --pss-warning:  linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+  --pss-danger:   linear-gradient(135deg, #f56565 0%, #ed8936 100%);
+  --pss-text:     #2d3748;
+  --pss-muted:    #4a5568;
+  --pss-light:    #718096;
+  --pss-white:    #ffffff;
+  --pss-shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
+  --pss-shadow-md: 0 4px 12px rgba(0,0,0,0.10);
+  --pss-shadow-lg: 0 8px 24px rgba(0,0,0,0.13);
+}
+
+/* ── Page ── */
+.pss-page {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f0f4ff 0%, #e8ecf4 100%);
+  padding: 1.25rem;
+  font-family: 'Inter', sans-serif;
+}
+
+.pss-container {
+  max-width: 1300px;
+  margin: 0 auto;
+}
+
+/* ── Header ── */
+.pss-header {
+  background: var(--pss-white);
+  border-radius: 16px;
+  box-shadow: var(--pss-shadow-md);
+  border: 1px solid rgba(0,0,0,0.04);
+  padding: 0.9rem 1.25rem;
+  margin-bottom: 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.pss-header::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: var(--pss-accent);
+}
+
+.pss-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0.9rem;
+  border-radius: 8px;
+  background: #f8fafc;
+  border: 1.5px solid #e2e8f0;
+  color: var(--pss-muted);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.pss-back-btn:hover {
+  background: var(--pss-white);
+  border-color: #cbd5e0;
+  color: var(--pss-text);
+}
+
+.pss-header-info { flex: 1; }
+
+.pss-header-info h1 {
+  font-family: 'Poppins', sans-serif;
+  font-size: 1.15rem;
+  font-weight: 800;
+  background: var(--pss-accent);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin: 0;
+  line-height: 1.2;
+}
+
+.pss-header-info p {
+  font-size: 0.75rem;
+  color: var(--pss-light);
+  margin: 0;
+}
+
+.pss-sign-badge {
+  background: var(--pss-primary);
+  color: var(--pss-white);
+  border-radius: 12px;
+  padding: 0.4rem 1.1rem;
+  font-family: 'Poppins', sans-serif;
+  font-size: 1.4rem;
+  font-weight: 900;
+  flex-shrink: 0;
+  line-height: 1.2;
+}
+
+/* ── Main 3-column grid ── */
+.pss-main-grid {
+  display: grid;
+  grid-template-columns: 260px 1fr 280px;
+  gap: 1.25rem;
+  align-items: start;
+}
+
+/* ── Card base ── */
+.pss-card {
+  background: var(--pss-white);
+  border-radius: 16px;
+  box-shadow: var(--pss-shadow-md);
+  border: 1px solid rgba(0,0,0,0.04);
+  overflow: hidden;
+  transition: box-shadow 0.2s;
+}
+
+.pss-card:hover { box-shadow: var(--pss-shadow-lg); }
+
+.pss-card-header {
+  padding: 0.75rem 1.25rem;
+  font-weight: 700;
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.88rem;
+  letter-spacing: 0.3px;
+  color: var(--pss-white);
+}
+
+.pss-card-header--primary { background: var(--pss-primary); }
+.pss-card-header--accent  { background: var(--pss-accent); }
+.pss-card-header--neutral {
+  background: #f8fafc;
+  color: var(--pss-text);
+  border-bottom: 1px solid #edf2f7;
+}
+
+.pss-card-body { padding: 1.25rem; }
+
+/* ── Reference image box ── */
+.pss-img-box {
+  min-height: 200px;
+  background: #f8fafc;
+  border: 2px dashed rgba(79,172,254,0.25);
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  transition: border-color 0.3s;
+}
+
+.pss-img-box:hover { border-color: #4facfe; }
+
+.pss-img-box img {
+  max-width: 100%;
+  max-height: 200px;
+  object-fit: contain;
+  border-radius: 8px;
+}
+
+.pss-img-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--pss-light);
+  text-align: center;
+  margin-top: 0.6rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* ── Camera container ── */
+.pss-camera-wrap {
+  position: relative;
+  width: 100%;
+  padding-top: 75%; /* 4:3 aspect ratio */
+  border-radius: 12px;
+  overflow: hidden;
+  background: #0f172a;
+}
+
+.pss-camera-wrap webcam,
+.pss-camera-wrap .pss-webcam,
+.pss-camera-wrap .pss-canvas {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover;
+}
+
+.pss-camera-off {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  color: #64748b;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.pss-camera-off-icon {
+  font-size: 2.5rem;
+  opacity: 0.4;
+}
+
+/* ── Prediction badge ── */
+.pss-prediction-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  background: #f8fafc;
+  border-radius: 10px;
+  border: 1px solid #edf2f7;
+}
+
+.pss-pred-label {
+  font-size: 0.75rem;
+  color: var(--pss-light);
+  font-weight: 600;
+}
+
+.pss-pred-value {
+  font-size: 1rem;
+  font-weight: 800;
+  font-family: 'Poppins', sans-serif;
+  background: var(--pss-accent);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.pss-pred-prob {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--pss-muted);
+}
+
+/* ── Confidence bar ── */
+.pss-conf-track {
+  height: 6px;
+  background: #edf2f7;
+  border-radius: 3px;
+  overflow: hidden;
+  margin-top: 0.5rem;
+}
+
+.pss-conf-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.3s ease, background 0.3s;
+}
+
+.pss-conf-fill--good    { background: var(--pss-success); }
+.pss-conf-fill--ok      { background: var(--pss-warning); }
+.pss-conf-fill--bad     { background: var(--pss-danger); }
+
+/* ── Status panel ── */
+.pss-status-box {
+  border-radius: 12px;
+  padding: 1.25rem;
+  text-align: center;
+  margin-bottom: 1rem;
+  transition: all 0.3s;
+}
+
+.pss-status-box--idle {
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+}
+
+.pss-status-box--success {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+}
+
+.pss-status-box--warning {
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+}
+
+.pss-status-box--error {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+}
+
+.pss-status-icon {
+  font-size: 2.2rem;
+  line-height: 1;
+  margin-bottom: 0.4rem;
+}
+
+.pss-status-title {
+  font-family: 'Poppins', sans-serif;
+  font-size: 1rem;
+  font-weight: 800;
+  margin-bottom: 0.2rem;
+}
+
+.pss-status-box--idle    .pss-status-title { color: #1e40af; }
+.pss-status-box--success .pss-status-title { color: #166534; }
+.pss-status-box--warning .pss-status-title { color: #92400e; }
+.pss-status-box--error   .pss-status-title { color: #991b1b; }
+
+.pss-status-sub {
+  font-size: 0.78rem;
+  font-weight: 500;
+  opacity: 0.8;
+}
+
+/* ── Buttons ── */
+.pss-btn-start {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.8rem;
+  border-radius: 10px;
+  background: var(--pss-primary);
+  border: none;
+  color: var(--pss-white);
+  font-size: 0.9rem;
+  font-weight: 700;
+  font-family: 'Poppins', sans-serif;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: var(--pss-shadow-sm);
+  margin-bottom: 0.6rem;
+}
+
+.pss-btn-start:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--pss-shadow-md);
+}
+
+.pss-btn-back {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.65rem;
+  border-radius: 10px;
+  background: #f8fafc;
+  border: 1.5px solid #e2e8f0;
+  color: var(--pss-muted);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.pss-btn-back:hover {
+  background: var(--pss-white);
+  border-color: #f56565;
+  color: #f56565;
+}
+
+/* ── Tip ── */
+.pss-tip {
+  margin-top: 0.75rem;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 10px;
+  padding: 0.65rem 0.75rem;
+  font-size: 0.75rem;
+  color: #1e40af;
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+/* ── Responsive ── */
+@media (max-width: 960px) {
+  .pss-main-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  .pss-main-grid > .pss-card:nth-child(3) {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 650px) {
+  .pss-page { padding: 0.75rem; }
+  .pss-main-grid { grid-template-columns: 1fr; }
+  .pss-main-grid > .pss-card:nth-child(3) { grid-column: unset; }
+  .pss-header { flex-wrap: wrap; }
+  .pss-sign-badge { font-size: 1.1rem; padding: 0.3rem 0.8rem; }
+}
