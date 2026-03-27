@@ -77,7 +77,7 @@ export default function LearnStaticSign() {
     let totalLandmarks = [];
 
     if (results.multiHandLandmarks) {
-      // console.log(results.multiHandLandmarks)
+      console.log(results.multiHandLandmarks)
       for (const landmarks of results.multiHandLandmarks) {
         connect(canvasCtx, landmarks, hands.HAND_CONNECTIONS, {
           color: '#00FF00',
@@ -98,7 +98,7 @@ export default function LearnStaticSign() {
       };
 
       if (totalLandmarks.length === 63) {
-        // const result = await axios.post('http://127.0.0.1:5000/predict-test', data);
+        const result = await axios.post('http://127.0.0.1:5000/predict-test', data);
         console.log(result);
         setPredictData(result.data);
       }

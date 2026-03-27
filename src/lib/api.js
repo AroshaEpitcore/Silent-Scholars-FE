@@ -1,7 +1,7 @@
 // src/lib/api.js
 // Small helpers to keep URLs consistent across fetch & WebSocket.
 
-const BASE = process.env.REACT_APP_API_BASE_URL || "http://localhost:5000"; // per docs local default
+const BASE = process.env.REACT_APP_API_BASE_URL || "http://localhost:5001"; // per docs local default
 
 export function apiBase() {
   return BASE.replace(/\/+$/, "");
