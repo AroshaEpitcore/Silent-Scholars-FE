@@ -53,16 +53,20 @@ export default function PracticeStaticSign() {
     if (results.multiHandLandmarks) {
       for (const landmarks of results.multiHandLandmarks) {
         connect(canvasCtx, landmarks, hands.HAND_CONNECTIONS, { color: "#00FF00", lineWidth: 4 });
-        connect(canvasCtx, landmarks, { color: "#FF0000", lineWidth: 2 });
+        window.drawLandmarks(canvasCtx, landmarks, { color: "#FF0000", lineWidth: 2 });
         landmarks.map((item) => {
           totalLandmarks.push(item.x, item.y, item.z);
         });
       }
 
       if (totalLandmarks.length === 63) {
-        const result = await axios.post("http://127.0.0.1:5000/predict-static-sign", { temp: totalLandmarks });
-        setLandmarkClass(result.data.predict);
-        setProbability(result.data.probability);
+        try {
+          const result = await axios.post("http://127.0.0.1:5001/predict-static-sign", { temp: totalLandmarks });
+          setLandmarkClass(result.data.predict);
+          setProbability(result.data.probability);
+        } catch (e) {
+          console.error("Prediction error:", e);
+        }
       }
     }
 

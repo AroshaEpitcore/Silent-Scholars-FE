@@ -28,7 +28,7 @@ export default function UserFulWord( { usefulWords } ) {
           ))}
         </ul>
       ) : (
-        <div class="alert alert-primary" role="alert">
+        <div className="alert alert-primary" role="alert">
           {t("PleaseClickUploadFileOrVoiceRecording")}
         </div>
       )}

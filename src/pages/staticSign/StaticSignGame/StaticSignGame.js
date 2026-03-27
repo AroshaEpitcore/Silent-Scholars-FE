@@ -101,8 +101,8 @@ export default function StaticSignGame() {
     if (results.multiHandLandmarks) {
       for (const landmarks of results.multiHandLandmarks) {
         connect(canvasCtx, landmarks, hands.HAND_CONNECTIONS, { color: '#00FF00', lineWidth: 5 });
-        connect(canvasCtx, landmarks, { color: '#FF0000', lineWidth: 2 });
-        await landmarks.map((item) => {
+        window.drawLandmarks(canvasCtx, landmarks, { color: '#FF0000', lineWidth: 2 });
+        landmarks.map((item) => {
           totalLandmarks.push(item.x);
           totalLandmarks.push(item.y);
           totalLandmarks.push(item.z);
@@ -110,20 +110,24 @@ export default function StaticSignGame() {
       }
 
       if (totalLandmarks.length === 63) {
-        const res = await axios.post('http://127.0.0.1:5000/predict-static-sign', { temp: totalLandmarks });
-        setLandmarkClass(res.data.predict);
-        setProbability(res.data.probability);
+        try {
+          const res = await axios.post('http://127.0.0.1:5001/predict-static-sign', { temp: totalLandmarks });
+          setLandmarkClass(res.data.predict);
+          setProbability(res.data.probability);
 
-        if (res.data.predict === 'A' && res.data.probability > 0.5 && go === 0) {
-          go = 1; setCurrentStep(1);
-        } else if (res.data.predict === 'B' && res.data.probability > 0.5 && go === 1) {
-          go = 2; setCurrentStep(2);
-        } else if (res.data.predict === 'C' && res.data.probability > 0.5 && go === 2) {
-          go = 3; setCurrentStep(3);
-        } else if (res.data.predict === 'D' && res.data.probability > 0.5 && go === 3) {
-          go = 4; setCurrentStep(4);
-        } else if (res.data.predict === 'E' && res.data.probability > 0.5 && go === 4) {
-          setResult(true);
+          if (res.data.predict === 'A' && res.data.probability > 0.5 && go === 0) {
+            go = 1; setCurrentStep(1);
+          } else if (res.data.predict === 'B' && res.data.probability > 0.5 && go === 1) {
+            go = 2; setCurrentStep(2);
+          } else if (res.data.predict === 'C' && res.data.probability > 0.5 && go === 2) {
+            go = 3; setCurrentStep(3);
+          } else if (res.data.predict === 'D' && res.data.probability > 0.5 && go === 3) {
+            go = 4; setCurrentStep(4);
+          } else if (res.data.predict === 'E' && res.data.probability > 0.5 && go === 4) {
+            setResult(true);
+          }
+        } catch (e) {
+          console.error("Prediction error:", e);
         }
       }
     }

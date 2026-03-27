@@ -660,3 +660,115 @@
     grid-template-columns: 1fr 1fr;
   }
 }
+
+/* ── Scores & Marks Table ── */
+.gd-scores-table-wrap {
+  overflow-x: auto;
+}
+
+.gd-scores-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+}
+
+.gd-scores-table thead tr {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #fff;
+}
+
+.gd-scores-table th {
+  padding: 0.6rem 0.9rem;
+  text-align: left;
+  font-weight: 600;
+  font-size: 0.75rem;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+}
+
+.gd-scores-table tbody tr {
+  border-bottom: 1px solid #f0f0f0;
+  transition: background 0.15s;
+}
+
+.gd-scores-table tbody tr:hover {
+  background: #f8f9ff;
+}
+
+.gd-scores-table td {
+  padding: 0.55rem 0.9rem;
+  color: #2d3748;
+  vertical-align: middle;
+}
+
+.gd-score-num {
+  color: #a0aec0;
+  font-weight: 600;
+  width: 32px;
+}
+
+.gd-score-cat {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.gd-score-bar-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 120px;
+}
+
+.gd-score-bar-track {
+  flex: 1;
+  height: 7px;
+  background: #edf2f7;
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.gd-score-bar-fill {
+  height: 100%;
+  border-radius: 99px;
+  transition: width 0.4s ease;
+}
+
+.gd-score-bar-fill--high { background: linear-gradient(90deg, #43e97b, #38f9d7); }
+.gd-score-bar-fill--mid  { background: linear-gradient(90deg, #fa709a, #fee140); }
+.gd-score-bar-fill--low  { background: linear-gradient(90deg, #f5365c, #f56036); }
+
+.gd-score-val {
+  font-weight: 700;
+  font-size: 0.8rem;
+  color: #2d3748;
+  min-width: 32px;
+  text-align: right;
+}
+
+.gd-score-acc {
+  font-weight: 500;
+  color: #667eea;
+}
+
+.gd-grade {
+  display: inline-block;
+  padding: 0.15rem 0.55rem;
+  border-radius: 6px;
+  font-weight: 800;
+  font-size: 0.8rem;
+  min-width: 28px;
+  text-align: center;
+}
+
+.gd-grade--high { background: rgba(67, 233, 123, 0.15); color: #1a9e5c; }
+.gd-grade--mid  { background: rgba(250, 112, 154, 0.12); color: #c05a7a; }
+.gd-grade--low  { background: rgba(245, 54, 92, 0.12);  color: #b91c3c; }
+
+.gd-score-date {
+  color: #a0aec0;
+  font-size: 0.75rem;
+  white-space: nowrap;
+}

@@ -1,57 +1,31 @@
 import React, { useState } from "react";
 import axios from "axios";
-import SpeechRecognition, {
-  useSpeechRecognition,
-} from "react-speech-recognition";
+import { useSpeechRecognition } from "react-speech-recognition";
 import FileUpload from "../../components/texttosign/FileUpload";
-import Speech from "../../components/texttosign/Speech";
-import UserFulWord from "../../components/texttosign/UserFulWord";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { SyncLoader } from "react-spinners";
-import { ScaleLoader } from "react-spinners";
-import { useTranslation } from "react-i18next";
+import { FaFileAlt, FaHandPaper, FaUpload, FaLanguage } from "react-icons/fa";
+import { getSinhala, isSinhalaWord, getEnglishFromSinhala } from "../../Data/EnglishToSinhala";
+import "./TextSign.css";
 
 export default function TextSign() {
-  const { t } = useTranslation("common");
   const [usefulWords, setUsefulWords] = useState([]);
   const [file, setFile] = useState(null);
   const [isFileLoading, setIsFileLoading] = useState(false);
-  const [isVoiceLoading, setIsVoiceLoading] = useState(false);
+  const [translations, setTranslations] = useState({});
+  const [isTranslating, setIsTranslating] = useState(false);
 
-  const [isFileClicked, setIsFileClicked] = useState(false);
-  const [isVoiceClicked, setIsVoiceClicked] = useState(false);
-
-  const fileClicked = () => {
-    setIsFileClicked(true);
-    setIsVoiceClicked(false);
-  }
-
-  const voiceClicked = () => {
-    setIsVoiceClicked(true);
-    setIsFileClicked(false);
-  }
+  const { browserSupportsSpeechRecognition } = useSpeechRecognition();
 
   const getPdfUsefulWords = async () => {
     try {
-      await axios.get("/pdfScan").then((res) => {
-        setUsefulWords(res.data.useful_words);
-        toast.success(t("PDFScanSuccessful"));
-      });
+      const res = await axios.get("http://127.0.0.1:5001/pdfScan");
+      setUsefulWords(res.data.useful_words);
+      setTranslations({});
+      toast.success("PDF scanned successfully!");
     } catch (error) {
-      toast.error(t("PDFScanError"));
-    }
-  };
-
-  const getAudioUsefulWords = async () => {
-    try {
-      await axios.get("/audioExtraction").then((res) => {
-        setUsefulWords(res.data.useful_words);
-        toast.success(t("AudioExtractSuccessful"));
-      });
-    } catch (error) {
-      console.log(error);
-      toast.error(t("AudioExtractionError"));
+      toast.error("PDF scan failed. Please try again.");
     }
   };
 
@@ -60,141 +34,154 @@ export default function TextSign() {
   };
 
   const handleUploadFile = async () => {
-    if (file === null) {
-      toast.error(t("Pleaseuploadafile"));
-    } else {
-      setIsFileLoading(true);
+    if (!file) {
+      toast.error("Please select a file first.");
+      return;
     }
-
+    setIsFileLoading(true);
     const formData = new FormData();
     formData.append("file", file);
-    const fileExtension = file.name.split(".").pop();
+    const fileExtension = file.name.split(".").pop().toLowerCase();
 
-    await axios
-      .post("/upload", formData)
-      .then((res) => {
-        setIsFileLoading(false);
-        toast.success(t("FileUploadSuccessful"));
-        if (fileExtension === "pdf") {
-          getPdfUsefulWords();
-        }
-        if (fileExtension === "m4a") {
-          getAudioUsefulWords();
-        }
-      })
-      .catch((err) => {
-        toast.error(t("FileUploadError"));
-      });
+    try {
+      await axios.post("http://127.0.0.1:5001/upload", formData);
+      toast.success("File uploaded successfully!");
+      if (fileExtension === "pdf") {
+        await getPdfUsefulWords();
+      } else {
+        toast.error("Only PDF files are supported.");
+      }
+    } catch (err) {
+      toast.error("File upload failed. Please try again.");
+    } finally {
+      setIsFileLoading(false);
+    }
   };
 
-  const {
-    transcript,
-    listening,
-    resetTranscript,
-    browserSupportsSpeechRecognition,
-  } = useSpeechRecognition();
-  const startListening = () => {
-    SpeechRecognition.startListening({ continuous: true });
-    setIsVoiceLoading(true);
-  }
+  const translateAll = async () => {
+    if (usefulWords.length === 0) return;
+    setIsTranslating(true);
+    toast.info("Translating words to Sinhala...");
 
-  const stopListening = () => {
-      SpeechRecognition.stopListening();
-      setIsVoiceLoading(false);
-  }
-
-  if (!browserSupportsSpeechRecognition) {
-    return <span>Browser doesn't support speech recognition.</span>;
-  }
-
-  const onSubmit = (e) => {
-    e.preventDefault();
-
-    const input_Sentence = {
-      sentence: transcript,
-    };
-
-    if (input_Sentence.sentence === "") {
-      toast.error(t("Pleasestartrecording"));
+    const results = {};
+    for (const word of usefulWords) {
+      // Use dictionary first, then API for unknown words
+      const dictResult = getSinhala(word);
+      if (dictResult) {
+        results[word] = dictResult;
+        continue;
+      }
+      try {
+        const res = await fetch(
+          `https://api.mymemory.translated.net/get?q=${encodeURIComponent(word)}&langpair=en|si`
+        );
+        const data = await res.json();
+        if (data.responseStatus === 200 && data.responseData?.translatedText) {
+          results[word] = data.responseData.translatedText;
+        }
+      } catch {
+        // skip failed word
+      }
     }
-    if (input_Sentence.sentence !== "" && usefulWords.length === 0) {
-      toast.error(t("Nousefulwordsfound"));
-    }
-    axios
-      .post("/typeSentence", input_Sentence)
-      .then((res) => {
-        setUsefulWords(res.data.useful_words);
-        toast.success(t("VoiceExtractionSuccessful"))
-      })
-      .catch((err) => {
-        toast.error(t("VoiceExtractionError"))
-      });
+
+    setTranslations(results);
+    setIsTranslating(false);
+    toast.success("Translation complete!");
   };
-
 
   return (
-    <>
-      <div className="container">
-        <div className="row d-flex align-items-center justify-content-center">
-          <ToastContainer
-            position="bottom-center"
-            theme="colored"
-            autoClose={2000}
-          />
-          <div className="col-md-6">
-            {/* add colapse */}
-            <div className="d-grid mb-4">
-              <button
-                className="btn btn-success mb-3"
-                type="button"
-                onClick={fileClicked}
-              >
-                {t("UploadFile")}
-              </button>
-              {isFileClicked && (
-              <>
-                <FileUpload
-                  handleSelectFile={handleSelectFile}
-                  handleUploadFile={handleUploadFile}
-                />
-                <SyncLoader loading={isFileLoading} color="purple" />
-              </>
-              )}
+    <div className="ts-page">
+      <ToastContainer position="bottom-center" theme="colored" autoClose={2000} />
 
+      {/* Hero */}
+      <div className="ts-hero">
+        <div className="ts-hero-icon"><FaHandPaper /></div>
+        <h1 className="ts-hero-title">Text to Sign</h1>
+        <p className="ts-hero-subtitle">Upload a PDF and convert its words into sign language</p>
+      </div>
+
+      <div className="ts-body">
+
+        {/* Upload Card */}
+        <div className="ts-upload-card">
+          <div className="ts-upload-header">
+            <FaUpload className="ts-upload-icon" />
+            <h2>Upload PDF</h2>
+          </div>
+          <p className="ts-upload-hint">Select a PDF file to extract and display its words as sign language references.</p>
+          <FileUpload handleSelectFile={handleSelectFile} handleUploadFile={handleUploadFile} />
+          {isFileLoading && (
+            <div className="ts-loader">
+              <SyncLoader color="#6c63ff" size={10} />
+              <span>Processing PDF...</span>
+            </div>
+          )}
+        </div>
+
+        {/* Results */}
+        {usefulWords.length > 0 && (
+          <div className="ts-results">
+            <div className="ts-results-header">
+              <div className="ts-results-title">
+                <FaFileAlt />
+                <h2>Extracted Words <span className="ts-badge">{usefulWords.length}</span></h2>
+              </div>
               <button
-                className="btn btn-dark mt-5 mb-2"
-                type="button"
-                onClick={voiceClicked}
+                className="ts-translate-btn"
+                onClick={translateAll}
+                disabled={isTranslating}
               >
-                {t("VoiceRecording")}
+                {isTranslating ? (
+                  <>
+                    <SyncLoader color="#fff" size={6} />
+                    <span>Translating...</span>
+                  </>
+                ) : (
+                  <>
+                    <FaLanguage />
+                    <span>Translate to Sinhala</span>
+                  </>
+                )}
               </button>
-              {isVoiceClicked && (
-                <>
-                <Speech
-                  onSubmit={onSubmit}
-                  transcript={transcript}
-                  listening={listening}
-                  resetTranscript={resetTranscript}
-                  startListening={startListening}
-                  stopListening={stopListening}
-                />
-                <ScaleLoader loading={isVoiceLoading} color="purple" />
-              </>
-              )}
             </div>
 
-            <UserFulWord usefulWords={usefulWords} />
+            <div className="ts-words-grid">
+              {usefulWords.map((word) => {
+                const isSinhala = isSinhalaWord(word);
+                // For Sinhala words: find English equivalent from reverse map
+                const englishEquiv = isSinhala ? getEnglishFromSinhala(word) : null;
+                // Sinhala label to show: if English word → look up translation; if Sinhala word → it IS the Sinhala
+                const sinhalaLabel = isSinhala ? word : (translations[word] || getSinhala(word));
+                // English label to show
+                const englishLabel = isSinhala ? (englishEquiv || word) : word;
+
+                return (
+                  <div
+                    className={`ts-word-card ${sinhalaLabel ? "ts-word-card--translated" : ""} ${isSinhala ? "ts-word-card--sinhala-input" : ""}`}
+                    key={word}
+                  >
+                    <FaHandPaper className="ts-word-icon" />
+                    <span className="ts-word-text">{englishLabel}</span>
+                    {sinhalaLabel && !isSinhala && (
+                      <span className="ts-word-sinhala">{sinhalaLabel}</span>
+                    )}
+                    {isSinhala && (
+                      <span className="ts-word-sinhala ts-word-sinhala--original">{word}</span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           </div>
-          <div className="col-md-6">
-            <img
-              src="https://1.bp.blogspot.com/-YQyl46fmJN8/XpJ5y0N39MI/AAAAAAABADc/pE0daFBPKe4egq46JW5rt0hSGyUXaWVlgCLcBGAsYHQ/s1600/giphy%2B%25281%2529.gif"
-              alt="textSign"
-              width="700vh"
-              height="700vh"
-            />
+        )}
+
+        {usefulWords.length === 0 && !isFileLoading && (
+          <div className="ts-empty">
+            <FaFileAlt className="ts-empty-icon" />
+            <p>Upload a PDF to see extracted words here</p>
           </div>
-        </div>
+        )}
       </div>
-    </>
+    </div>
   );
 }

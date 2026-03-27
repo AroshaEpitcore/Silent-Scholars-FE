@@ -6,7 +6,7 @@ import axios from 'axios';
 
 import "./components/i18n";
 
-axios.defaults.baseURL = 'http://localhost:5000/api';
+axios.defaults.baseURL = 'http://localhost:5001/api';
 
 ReactDOM.render(
   <React.StrictMode>

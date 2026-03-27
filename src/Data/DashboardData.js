@@ -12,10 +12,10 @@ export const DashboardDetails = [
     link: "/textSign",
   },
   {
-    id: 2,
-    title: "DynamicSign",
-    image: app,
-    link: "/dashboard-animals",
+    id: 4,
+    title: "trafficSigns",
+    image: seo,
+    link: "/traffic-signs",
   },
   {
     id: 3,
@@ -24,10 +24,10 @@ export const DashboardDetails = [
     link: "/static-sign-dashboard",
   },
   {
-    id: 4,
-    title: "trafficSigns",
-    image: seo,
-    link: "/traffic-signs",
+    id: 2,
+    title: "DynamicSign",
+    image: app,
+    link: "/dashboard-animals",
   },
   {
     id: 5,

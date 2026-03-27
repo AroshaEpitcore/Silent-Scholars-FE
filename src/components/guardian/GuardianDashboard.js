@@ -30,6 +30,7 @@ const GuardianDashboard = () => {
     achievements: [],
     recommendations: [],
     learningGoals: [],
+    scores: [],
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -50,6 +51,7 @@ const GuardianDashboard = () => {
         achievements,
         recommendations,
         learningGoals,
+        scores,
       ] = await Promise.all([
         GuardianDataService.getChildInfo(),
         GuardianDataService.getPerformanceOverview(),
@@ -58,8 +60,9 @@ const GuardianDashboard = () => {
         GuardianDataService.getAchievements(),
         GuardianDataService.getRecommendations(),
         GuardianDataService.getLearningGoals(),
+        GuardianDataService.getScores(),
       ]);
-      setData({ childInfo, performanceOverview, categoryProgress, recentActivities, achievements, recommendations, learningGoals });
+      setData({ childInfo, performanceOverview, categoryProgress, recentActivities, achievements, recommendations, learningGoals, scores });
     } catch (err) {
       setError("Failed to load dashboard data. Please try again.");
     } finally {
@@ -343,7 +346,68 @@ const GuardianDashboard = () => {
           </div>
         </div>
 
-        {/* ── Row 4: Learning Goals ── */}
+        {/* ── Row 4: Scores & Marks ── */}
+        <div className="gd-card">
+          <div className="gd-card-header"><FaChartLine /> Scores &amp; Marks</div>
+          <div className="gd-card-body">
+            {data.scores.length === 0 ? (
+              <div className="gd-empty">No scores recorded yet. Complete a practice session to see marks here.</div>
+            ) : (
+              <div className="gd-scores-table-wrap">
+                <table className="gd-scores-table">
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>Category</th>
+                      <th>Score</th>
+                      <th>Accuracy</th>
+                      <th>Grade</th>
+                      <th>Date</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {data.scores.map((s, i) => {
+                      const grade =
+                        s.score >= 90 ? 'A' :
+                        s.score >= 80 ? 'B' :
+                        s.score >= 70 ? 'C' :
+                        s.score >= 60 ? 'D' : 'F';
+                      const gradeClass =
+                        s.score >= 80 ? 'gd-grade--high' :
+                        s.score >= 60 ? 'gd-grade--mid' : 'gd-grade--low';
+                      return (
+                        <tr key={s.id}>
+                          <td className="gd-score-num">{i + 1}</td>
+                          <td>
+                            <span className="gd-score-cat">
+                              {getCategoryIcon(s.category)}&nbsp;{s.category}
+                            </span>
+                          </td>
+                          <td>
+                            <div className="gd-score-bar-wrap">
+                              <div className="gd-score-bar-track">
+                                <div
+                                  className={`gd-score-bar-fill ${s.score >= 80 ? 'gd-score-bar-fill--high' : s.score >= 60 ? 'gd-score-bar-fill--mid' : 'gd-score-bar-fill--low'}`}
+                                  style={{ width: `${s.score}%` }}
+                                />
+                              </div>
+                              <span className="gd-score-val">{s.score}%</span>
+                            </div>
+                          </td>
+                          <td className="gd-score-acc">{s.accuracy}%</td>
+                          <td><span className={`gd-grade ${gradeClass}`}>{grade}</span></td>
+                          <td className="gd-score-date">{fmtDate(s.date)}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* ── Row 5: Learning Goals ── */}
         <div className="gd-card">
           <div className="gd-card-header"><FaBullseye /> Learning Goals</div>
           <div className="gd-card-body">

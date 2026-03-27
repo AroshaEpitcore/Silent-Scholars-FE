@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__ide__getDiagnostics",
+      "Bash(netstat -ano 2>/dev/null | grep \":5000\" | head -5 || echo \"no result)",
+      "Bash(tasklist:*)",
+      "Bash(python:)"
+    ]
+  }
+}

@@ -523,6 +523,25 @@ class GuardianDataService {
     }
   }
 
+  // Get all scores (public)
+  async getScores(limitCount = 20) {
+    try {
+      const user = auth.currentUser;
+      if (!user) throw new Error('No authenticated user');
+      const scores = await this.getUserScores(user.uid);
+      return scores.slice(0, limitCount).map(s => ({
+        id: s.id,
+        category: s.category,
+        score: s.score || 0,
+        accuracy: s.accuracy || 0,
+        date: s.timestamp.toISOString(),
+      }));
+    } catch (error) {
+      console.error('Error fetching scores:', error);
+      return [];
+    }
+  }
+
   // Record user activity
   async recordActivity(activityData) {
     try {

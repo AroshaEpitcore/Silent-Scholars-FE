@@ -3,17 +3,19 @@ import './dashboard.css';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { DashboardDetails } from '../../Data/DashboardData';
-import { FaSignLanguage, FaTrafficLight, FaChartLine } from 'react-icons/fa';
+import { FaSignLanguage, FaTrafficLight, FaChartLine, FaPaw, FaFileAlt } from 'react-icons/fa';
 
 export default function Dashboard() {
 
     const { t } = useTranslation("common");
 
-    // Icon mapping for each service (only remaining)
+    // Icon mapping for each service
     const serviceIcons = {
-        3: <FaSignLanguage />, // Static Signs
+        1: <FaFileAlt />,      // Text to Sign
         4: <FaTrafficLight />, // Traffic Signs
-        5: <FaChartLine /> // Guardian Dashboard
+        3: <FaSignLanguage />, // Game Based (Static Signs)
+        2: <FaPaw />,          // Dynamic Signs (Animals)
+        5: <FaChartLine />     // Guardian Dashboard
     };
 
     return (
@@ -35,7 +37,6 @@ export default function Dashboard() {
             
             <div className="services-grid">
                 {DashboardDetails
-                    .filter(detail => detail.id !== 1 && detail.id !== 2) // remove first two
                     .map((detail) => (
                         <div className="service-card-wrapper" key={detail.id}>
                             <div className="card service-card shadow-lg">
@@ -52,6 +53,8 @@ export default function Dashboard() {
                                     </h3>
                                     <hr className="mx-auto w-50 mb-3" />
                                     <p className="card-text flex-grow-1">
+                                        {detail.id === 1 && t('textToSignDescription')}
+                                        {detail.id === 2 && t('animalsDescription')}
                                         {detail.id === 3 && t('staticSignsDescription')}
                                         {detail.id === 4 && t('trafficSignsDescription')}
                                         {detail.id === 5 && t('guardianDashboardDescription')}

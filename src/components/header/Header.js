@@ -4,7 +4,7 @@ import {
   FaChild, FaUser, FaSignOutAlt, FaHome, FaBook,
   FaGamepad, FaShieldAlt, FaTrophy, FaChevronDown,
   FaBars, FaTimes, FaClock, FaCheckCircle, FaHistory,
-  FaTrafficLight, FaPaw, FaBell, FaCog,
+  FaTrafficLight, FaPaw, FaBell, FaCog, FaFileAlt,
 } from "react-icons/fa";
 import { auth } from "../../firebase";
 import { signOut } from "firebase/auth";
@@ -26,6 +26,7 @@ const NAV = [
       { label: "Static Signs",  to: "/learn-static-sign",   icon: <FaBook /> },
       { label: "Traffic Signs", to: "/traffic-signs",        icon: <FaTrafficLight /> },
       { label: "Animals",       to: "/dashboard-animals",    icon: <FaPaw /> },
+      { label: "Text to Sign",  to: "/textSign",             icon: <FaFileAlt /> },
     ],
   },
   {
