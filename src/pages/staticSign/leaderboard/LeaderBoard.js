@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { db } from '../../../firebase';
 import { collection, getDocs } from 'firebase/firestore';
+import { useTranslation } from 'react-i18next';
 import '../static-signs.css';
 
 export default function LeaderBoard() {
+  const { t } = useTranslation("common");
   const [leaderboardData, setLeaderboardData] = useState([]);
 
   useEffect(() => {
@@ -34,8 +36,8 @@ export default function LeaderBoard() {
 
         {/* Hero header */}
         <div className="ss-lb-header">
-          <div className="ss-lb-title">🏆 Leaderboard</div>
-          <div className="ss-lb-subtitle">Top players ranked by score</div>
+          <div className="ss-lb-title">🏆 {t('leaderboardTitle')}</div>
+          <div className="ss-lb-subtitle">{t('ssTopPlayersRanked')}</div>
         </div>
 
         {/* Table */}
@@ -43,16 +45,16 @@ export default function LeaderBoard() {
           <table className="ss-table">
             <thead>
               <tr>
-                <th style={{ width: '80px' }}>Rank</th>
-                <th>Name</th>
-                <th style={{ width: '120px' }}>Score</th>
+                <th style={{ width: '80px' }}>{t('ssRankLabel')}</th>
+                <th>{t('name')}</th>
+                <th style={{ width: '120px' }}>{t('score')}</th>
               </tr>
             </thead>
             <tbody>
               {sorted.length === 0 && (
                 <tr>
                   <td colSpan={3} className="ss-table-empty">
-                    No scores yet — be the first!
+                    {t('ssNoScoresYet')}
                   </td>
                 </tr>
               )}
@@ -63,7 +65,7 @@ export default function LeaderBoard() {
                   </td>
                   <td>
                     <span style={{ fontWeight: index < 3 ? 700 : 400 }}>
-                      {user.name || 'Anonymous'}
+                      {user.name || t('unknown')}
                     </span>
                   </td>
                   <td>

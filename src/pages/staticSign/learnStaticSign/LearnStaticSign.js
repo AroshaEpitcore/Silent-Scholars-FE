@@ -7,6 +7,7 @@ import { Hands } from "@mediapipe/hands";
 import axios from "axios";
 import { StaticSignData } from '../../../Data/StaticSignData';
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from 'react-i18next';
 import '../static-signs.css';
 
 let time = 0;
@@ -29,6 +30,7 @@ export default function LearnStaticSign() {
   const [probability, setProbability] = useState(0);
   const [currentStep, setCurrentStep] = React.useState(0);
 
+  const { t } = useTranslation("common");
   let navigate = useNavigate();
 
   const routePractice = () => {
@@ -121,13 +123,13 @@ export default function LearnStaticSign() {
 
         {/* Page Header */}
         <div className="ss-page-header">
-          <button className="ss-back-btn" onClick={routeHome}>← Back</button>
+          <button className="ss-back-btn" onClick={routeHome}>← {t('back', 'Back')}</button>
           <div>
-            <div className="ss-page-title">Static Sign</div>
-            <div className="ss-page-subtitle">Learn a static sign step by step</div>
+            <div className="ss-page-title">{t('staticSign')}</div>
+            <div className="ss-page-subtitle">{t('ssLearnPageSubtitle')}</div>
           </div>
           <div className="ss-header-badge">
-            Step {currentStep + 1} / {SignData.length}
+            {t('ssStepOf', { current: currentStep + 1, total: SignData.length })}
           </div>
         </div>
 
@@ -136,7 +138,7 @@ export default function LearnStaticSign() {
 
           {/* Col 1 — Alphabet image */}
           <div className="ss-card">
-            <div className="ss-card-header">Letter</div>
+            <div className="ss-card-header">{t('ssLetterLabel')}</div>
             <div className="ss-card-body">
               <div className="ss-img-box">
                 <img
@@ -145,13 +147,13 @@ export default function LearnStaticSign() {
                 />
               </div>
               <div className="ss-sign-name">{SignData[currentStep].name}</div>
-              <div className="ss-img-label">Current Letter</div>
+              <div className="ss-img-label">{t('ssCurrentLetter')}</div>
             </div>
           </div>
 
           {/* Col 2 — Sign language image */}
           <div className="ss-card">
-            <div className="ss-card-header accent">Sign Language</div>
+            <div className="ss-card-header accent">{t('ssSignLanguageLabel')}</div>
             <div className="ss-card-body">
               <div className="ss-img-box">
                 <img
@@ -159,29 +161,29 @@ export default function LearnStaticSign() {
                   alt={`Sign for ${SignData[currentStep].name}`}
                 />
               </div>
-              <div className="ss-img-label">How to sign it</div>
+              <div className="ss-img-label">{t('ssHowToSignIt')}</div>
               <div className="ss-divider"></div>
               <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', textAlign: 'center', lineHeight: 1.5 }}>
-                Study the hand position carefully before practicing
+                {t('ssStudyHandPosition')}
               </div>
             </div>
           </div>
 
           {/* Col 3 — Controls */}
           <div className="ss-card">
-            <div className="ss-card-header success">Practice</div>
+            <div className="ss-card-header success">{t('ssPracticeLabel')}</div>
             <div className="ss-card-body">
               <div className="ss-result-box info">
                 <span className="ss-result-icon">🎯</span>
-                <div className="ss-result-title">Ready to Practice?</div>
+                <div className="ss-result-title">{t('ssReadyToPractice')}</div>
                 <div className="ss-result-subtitle">
-                  Click Start to practice this sign with your webcam
+                  {t('ssClickToStartPractice')}
                 </div>
               </div>
 
               <div className="ss-btn-group">
                 <button className="ss-btn-primary" onClick={routePractice}>
-                  ▶ Start Practice
+                  ▶ {t('ssStartPractice')}
                 </button>
 
                 {currentStep < SignData.length - 1 ? (
@@ -189,11 +191,11 @@ export default function LearnStaticSign() {
                     className="ss-btn-accent"
                     onClick={() => setCurrentStep(currentStep + 1)}
                   >
-                    Learn Next Sign →
+                    {t('ssLearnNextSign')} →
                   </button>
                 ) : (
                   <button className="ss-btn-outline" onClick={routeHome}>
-                    ← Back to Dashboard
+                    ← {t('ssBackToDashboard')}
                   </button>
                 )}
               </div>
@@ -202,7 +204,7 @@ export default function LearnStaticSign() {
 
               {/* Progress dots */}
               <div style={{ textAlign: 'center' }}>
-                <div className="ss-img-label" style={{ marginBottom: '0.5rem' }}>Progress</div>
+                <div className="ss-img-label" style={{ marginBottom: '0.5rem' }}>{t('ssProgressLabel')}</div>
                 <div style={{ display: 'flex', justifyContent: 'center', gap: '5px', flexWrap: 'wrap' }}>
                   {SignData.slice(0, Math.min(SignData.length, 12)).map((_, i) => (
                     <div

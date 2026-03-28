@@ -11,12 +11,14 @@ import { useNavigate, useParams } from "react-router-dom";
 import { db } from '../../../firebase';
 import { doc, setDoc } from 'firebase/firestore';
 import { auth } from "../../../firebase";
+import { useTranslation } from 'react-i18next';
 import '../static-signs.css';
 
 let go = 0;
 
 export default function StaticSignGame() {
 
+  const { t } = useTranslation("common");
   let navigate = useNavigate();
   const routeLeaderboard = () => {
     let path = `/leaderboard`;
@@ -191,11 +193,11 @@ export default function StaticSignGame() {
         {/* Page Header */}
         <div className="ss-page-header">
           <div>
-            <div className="ss-page-title">Static Sign Game</div>
-            <div className="ss-page-subtitle">Sign A → B → C → D → E in order to win!</div>
+            <div className="ss-page-title">{t('startGame')}</div>
+            <div className="ss-page-subtitle">{t('ssGameSubtitle')}</div>
           </div>
           <div className="ss-header-badge">
-            Score: {totalMarks}
+            {t('score')}: {totalMarks}
           </div>
         </div>
 
@@ -251,7 +253,7 @@ export default function StaticSignGame() {
 
           {/* Col 1 — Current sign */}
           <div className="ss-card">
-            <div className="ss-card-header">Current Sign</div>
+            <div className="ss-card-header">{t('ssCurrentSign')}</div>
             <div className="ss-card-body">
               <div className="ss-img-box">
                 <img
@@ -260,18 +262,18 @@ export default function StaticSignGame() {
                 />
               </div>
               <div className="ss-sign-name">{SignData[go].name}</div>
-              <div className="ss-img-label">Sign this letter</div>
+              <div className="ss-img-label">{t('ssSignThisLetter')}</div>
             </div>
           </div>
 
           {/* Col 2 — Camera */}
           <div className="ss-card">
-            <div className="ss-card-header accent">Live Camera</div>
+            <div className="ss-card-header accent">{t('ssLiveCamera')}</div>
             <div className="ss-card-body">
               <div className="ss-webcam-box">
                 {isCameraOn
                   ? <Test webcamRef={webcamRef} canvasRef={canvasRef} />
-                  : <div className="ss-webcam-off">Camera is off</div>
+                  : <div className="ss-webcam-off">{t('ssCameraOff')}</div>
                 }
               </div>
             </div>
@@ -279,20 +281,20 @@ export default function StaticSignGame() {
 
           {/* Col 3 — Game status */}
           <div className="ss-card">
-            <div className="ss-card-header success">Game Status</div>
+            <div className="ss-card-header success">{t('ssGameStatus')}</div>
             <div className="ss-card-body">
 
               {/* Start state */}
               {learn && (
                 <div className="ss-result-box info">
                   <span className="ss-result-icon">🎮</span>
-                  <div className="ss-result-title">Start Game</div>
+                  <div className="ss-result-title">{t('startGame')}</div>
                   <div className="ss-result-subtitle">
-                    Sign A, B, C, D, E in order to win!
+                    {t('ssStartGameDesc')}
                   </div>
                   <div className="ss-btn-group">
                     <button className="ss-btn-primary" onClick={onClickStart}>
-                      ▶ Start Game
+                      ▶ {t('ssStartGameBtn')}
                     </button>
                   </div>
                 </div>
@@ -302,7 +304,7 @@ export default function StaticSignGame() {
               {!learn && !result && (
                 <>
                   <div className="ss-prediction-box">
-                    <div className="ss-prediction-label">Detected Sign</div>
+                    <div className="ss-prediction-label">{t('ssDetectedSign')}</div>
                     <div className="ss-prediction-value">
                       {landmarkClass !== 'none' ? landmarkClass : '—'}
                     </div>
@@ -313,12 +315,12 @@ export default function StaticSignGame() {
                       />
                     </div>
                     <div className="ss-confidence-text">
-                      Confidence: {(probability * 100).toFixed(0)}%
+                      {t('confidence')}: {(probability * 100).toFixed(0)}%
                     </div>
                   </div>
                   <div className="ss-btn-group">
                     <button className="ss-btn-outline" onClick={nextStep}>
-                      Skip This Sign (-20pts)
+                      {t('ssSkipSign')}
                     </button>
                   </div>
                 </>
@@ -328,13 +330,13 @@ export default function StaticSignGame() {
               {result && (
                 <div className="ss-result-box success">
                   <span className="ss-result-icon">🏆</span>
-                  <div className="ss-result-title">You Finished!</div>
+                  <div className="ss-result-title">{t('ssYouFinished')}</div>
                   <div className="ss-result-subtitle">
-                    Amazing! You completed all signs!
+                    {t('ssAmazingCompleted')}
                   </div>
                   <div className="ss-btn-group">
                     <button className="ss-btn-success" onClick={() => stopDetection()}>
-                      View Leaderboard
+                      {t('ssViewLeaderboardBtn')}
                     </button>
                   </div>
                 </div>
@@ -343,15 +345,15 @@ export default function StaticSignGame() {
               {/* Score stats */}
               <div className="ss-stats-row">
                 <div className="ss-stat-item">
-                  <div className="ss-stat-label">Score</div>
+                  <div className="ss-stat-label">{t('score')}</div>
                   <div className="ss-stat-value">{totalMarks}</div>
                 </div>
                 <div className="ss-stat-item">
-                  <div className="ss-stat-label">Progress</div>
+                  <div className="ss-stat-label">{t('ssProgressLabel')}</div>
                   <div className="ss-stat-value">{go}/5</div>
                 </div>
                 <div className="ss-stat-item">
-                  <div className="ss-stat-label">Max</div>
+                  <div className="ss-stat-label">{t('ssMaxScore')}</div>
                   <div className="ss-stat-value">100</div>
                 </div>
               </div>
