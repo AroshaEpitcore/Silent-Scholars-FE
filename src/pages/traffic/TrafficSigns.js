@@ -416,6 +416,18 @@ export default function TrafficSigns() {
           </div>
         </div>
 
+        {/* Guardian Dashboard Link - Always Visible */}
+        <div className="ts-guardian-card">
+          <div className="ts-guardian-icon">📊</div>
+          <div className="ts-guardian-body">
+            <div className="ts-guardian-title">{t("tsGuardianCardTitle")}</div>
+            <div className="ts-guardian-desc">{t("tsGuardianCardDesc")}</div>
+          </div>
+          <Link to="/guardian-dashboard" className="ts-guardian-btn">
+            {t("tsGoToDashboard")}
+          </Link>
+        </div>
+
         {/* Session Statistics - Full Width */}
         {attemptCount > 0 && (
           <div className="session-stats">

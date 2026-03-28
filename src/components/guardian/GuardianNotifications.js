@@ -1,28 +1,57 @@
 import React, { useState, useEffect } from 'react';
 import { auth, db } from '../../firebase';
-import { doc, getDoc, updateDoc, collection, query, where, getDocs, addDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, updateDoc, collection, query, where, getDocs, serverTimestamp } from 'firebase/firestore';
+import { useTranslation } from 'react-i18next';
 import GuardianDataService from '../../services/GuardianDataService';
 import './guardian-dashboard.css';
-import { 
-  FaBell, 
-  FaExclamationTriangle, 
-  FaCheckCircle, 
-  FaInfoCircle, 
+import {
+  FaBell,
+  FaExclamationTriangle,
+  FaCheckCircle,
+  FaInfoCircle,
   FaTimes,
   FaTrophy,
   FaChartLine,
-  FaClock
+  FaClock,
+  FaEnvelope,
+  FaMobile,
+  FaSync,
 } from 'react-icons/fa';
 
+/* ── Reusable toggle (same as settings page) ── */
+function SettingToggle({ id, label, checked, onChange }) {
+  return (
+    <div className="gs-setting-item">
+      <div className="gs-setting-info">
+        <div className="gs-setting-label">{label}</div>
+      </div>
+      <label className="gs-toggle">
+        <input type="checkbox" id={id} checked={checked} onChange={onChange} />
+        <span className="gs-toggle-slider" />
+      </label>
+    </div>
+  );
+}
+
 const GuardianNotifications = () => {
+  const { t } = useTranslation('common');
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [childInfo, setChildInfo] = useState(null);
   const [message, setMessage] = useState('');
+  const [messageType, setMessageType] = useState('');
+  const [prefEmail, setPrefEmail] = useState({ achievements: true, performance: true, weekly: true });
+  const [prefPush, setPrefPush]   = useState({ achievements: true, performance: false, milestones: true });
 
   useEffect(() => {
     loadNotifications();
   }, []);
+
+  const showMessage = (msg, type) => {
+    setMessage(msg);
+    setMessageType(type);
+    setTimeout(() => { setMessage(''); setMessageType(''); }, 3000);
+  };
 
   const loadNotifications = async () => {
     try {
@@ -30,31 +59,26 @@ const GuardianNotifications = () => {
       const user = auth.currentUser;
       if (!user) return;
 
-      // Load child info
       const childData = await GuardianDataService.getChildInfo();
       setChildInfo(childData);
 
-      // Load notifications from Firestore
       const notificationsQuery = query(
         collection(db, 'guardianNotifications'),
         where('userId', '==', user.uid),
         where('active', '==', true)
       );
       const snapshot = await getDocs(notificationsQuery);
-      
-      const notificationsData = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-        timestamp: doc.data().timestamp?.toDate() || new Date()
-      }));
 
-      // Sort by timestamp (newest first)
-      notificationsData.sort((a, b) => b.timestamp - a.timestamp);
-      
-      setNotifications(notificationsData);
+      const data = snapshot.docs.map(d => ({
+        id: d.id,
+        ...d.data(),
+        timestamp: d.data().timestamp?.toDate() || new Date(),
+      }));
+      data.sort((a, b) => b.timestamp - a.timestamp);
+      setNotifications(data);
     } catch (error) {
       console.error('Error loading notifications:', error);
-      setMessage('Error loading notifications');
+      showMessage(t('gdErrorLoadingNotifications'), 'danger');
     } finally {
       setLoading(false);
     }
@@ -64,24 +88,15 @@ const GuardianNotifications = () => {
     try {
       const user = auth.currentUser;
       if (!user) return;
-
-      // Update in Firestore
-      const notificationRef = doc(db, 'guardianNotifications', id);
-      await updateDoc(notificationRef, {
+      await updateDoc(doc(db, 'guardianNotifications', id), {
         read: true,
-        readAt: serverTimestamp()
+        readAt: serverTimestamp(),
       });
-
-      // Update local state
-      setNotifications(prev => 
-        prev.map(notification => 
-          notification.id === id 
-            ? { ...notification, read: true }
-            : notification
-        )
+      setNotifications(prev =>
+        prev.map(n => n.id === id ? { ...n, read: true } : n)
       );
     } catch (error) {
-      console.error('Error marking notification as read:', error);
+      console.error('Error marking as read:', error);
     }
   };
 
@@ -89,18 +104,11 @@ const GuardianNotifications = () => {
     try {
       const user = auth.currentUser;
       if (!user) return;
-
-      // Mark as inactive in Firestore (soft delete)
-      const notificationRef = doc(db, 'guardianNotifications', id);
-      await updateDoc(notificationRef, {
+      await updateDoc(doc(db, 'guardianNotifications', id), {
         active: false,
-        deletedAt: serverTimestamp()
+        deletedAt: serverTimestamp(),
       });
-
-      // Remove from local state
-      setNotifications(prev => 
-        prev.filter(notification => notification.id !== id)
-      );
+      setNotifications(prev => prev.filter(n => n.id !== id));
     } catch (error) {
       console.error('Error deleting notification:', error);
     }
@@ -110,26 +118,18 @@ const GuardianNotifications = () => {
     try {
       const user = auth.currentUser;
       if (!user) return;
-
-      const unreadNotifications = notifications.filter(n => !n.read);
-      
-      // Update all unread notifications in Firestore
-      const updatePromises = unreadNotifications.map(notification => {
-        const notificationRef = doc(db, 'guardianNotifications', notification.id);
-        return updateDoc(notificationRef, {
-          read: true,
-          readAt: serverTimestamp()
-        });
-      });
-
-      await Promise.all(updatePromises);
-
-      // Update local state
-      setNotifications(prev => 
-        prev.map(notification => ({ ...notification, read: true }))
+      const unread = notifications.filter(n => !n.read);
+      await Promise.all(
+        unread.map(n =>
+          updateDoc(doc(db, 'guardianNotifications', n.id), {
+            read: true,
+            readAt: serverTimestamp(),
+          })
+        )
       );
+      setNotifications(prev => prev.map(n => ({ ...n, read: true })));
     } catch (error) {
-      console.error('Error marking all notifications as read:', error);
+      console.error('Error marking all as read:', error);
     }
   };
 
@@ -137,78 +137,63 @@ const GuardianNotifications = () => {
     try {
       const user = auth.currentUser;
       if (!user) return;
-
-      // Mark all notifications as inactive in Firestore
-      const updatePromises = notifications.map(notification => {
-        const notificationRef = doc(db, 'guardianNotifications', notification.id);
-        return updateDoc(notificationRef, {
-          active: false,
-          deletedAt: serverTimestamp()
-        });
-      });
-
-      await Promise.all(updatePromises);
-
-      // Clear local state
+      await Promise.all(
+        notifications.map(n =>
+          updateDoc(doc(db, 'guardianNotifications', n.id), {
+            active: false,
+            deletedAt: serverTimestamp(),
+          })
+        )
+      );
       setNotifications([]);
     } catch (error) {
-      console.error('Error clearing all notifications:', error);
+      console.error('Error clearing notifications:', error);
     }
   };
 
   const formatTimeAgo = (timestamp) => {
-    const now = new Date();
-    const diffInSeconds = Math.floor((now - timestamp) / 1000);
-    
-    if (diffInSeconds < 60) return 'Just now';
-    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} minutes ago`;
-    if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} hours ago`;
-    if (diffInSeconds < 2592000) return `${Math.floor(diffInSeconds / 86400)} days ago`;
+    const diff = Math.floor((new Date() - timestamp) / 1000);
+    if (diff < 60)      return t('gdJustNow');
+    if (diff < 3600)    return t('gdMinutesAgo', { count: Math.floor(diff / 60) });
+    if (diff < 86400)   return t('gdHoursAgo',   { count: Math.floor(diff / 3600) });
+    if (diff < 2592000) return t('gdDaysAgo',    { count: Math.floor(diff / 86400) });
     return timestamp.toLocaleDateString();
   };
 
-  const getNotificationIcon = (type) => {
+  const getIcon = (type) => {
     switch (type) {
-      case 'achievement':
-        return <FaTrophy className="text-warning" />;
-      case 'performance':
-        return <FaExclamationTriangle className="text-danger" />;
-      case 'milestone':
-        return <FaCheckCircle className="text-success" />;
-      case 'goal':
-        return <FaChartLine className="text-info" />;
-      case 'recommendation':
-        return <FaInfoCircle className="text-primary" />;
-      default:
-        return <FaBell className="text-muted" />;
+      case 'achievement':   return <FaTrophy style={{ color: '#d69e2e' }} />;
+      case 'performance':   return <FaExclamationTriangle style={{ color: '#f56565' }} />;
+      case 'milestone':     return <FaCheckCircle style={{ color: '#48bb78' }} />;
+      case 'goal':          return <FaChartLine style={{ color: '#4facfe' }} />;
+      case 'recommendation':return <FaInfoCircle style={{ color: '#667eea' }} />;
+      default:              return <FaBell style={{ color: '#a0aec0' }} />;
     }
   };
 
-  const getPriorityClass = (priority) => {
+  const priorityClass = (priority) => {
     switch (priority) {
-      case 'high':
-        return 'border-danger';
-      case 'medium':
-        return 'border-warning';
-      case 'low':
-        return 'border-success';
-      default:
-        return 'border-muted';
+      case 'high':   return 'gn-item--high';
+      case 'medium': return 'gn-item--medium';
+      case 'low':    return 'gn-item--low';
+      default:       return '';
     }
   };
 
-  const unreadCount = notifications.filter(n => !n.read).length;
+  const unreadCount       = notifications.filter(n => !n.read).length;
+  const highCount         = notifications.filter(n => n.priority === 'high').length;
+  const achievementCount  = notifications.filter(n => n.type === 'achievement').length;
+  const milestoneCount    = notifications.filter(n => n.type === 'milestone').length;
 
+  /* ── Loading ── */
   if (loading) {
     return (
       <div className="guardian-dashboard">
-        <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '50vh' }}>
-          <div className="text-center">
-            <div className="spinner-border text-primary" role="status">
-              <span className="visually-hidden">Loading...</span>
-            </div>
-            <p className="mt-3">Loading notifications...</p>
+        <div className="gd-loading">
+          <div className="spinner-border text-primary" role="status">
+            <span className="visually-hidden">{t('gdLoadingNotifications')}</span>
           </div>
+          <p>{t('gdLoadingNotifications')}</p>
         </div>
       </div>
     );
@@ -216,188 +201,183 @@ const GuardianNotifications = () => {
 
   return (
     <div className="guardian-dashboard">
-      {/* Header */}
-      <div className="guardian-header">
-        <div className="d-flex justify-content-between align-items-center">
-          <div>
-            <h1>Notifications</h1>
-            <p>Stay updated on {childInfo?.name || "your child's"} learning progress</p>
+      <div className="gd-container">
+
+        {/* ── Header ── */}
+        <div className="gd-header">
+          <div className="gd-header-title">
+            <h1>{t('gdNotificationsTitle')}</h1>
+            <p>{t('gdNotificationsSubtitle', { name: childInfo?.name || t('unknown') })}</p>
           </div>
           {message && (
-            <div className={`alert ${message.includes('Error') ? 'alert-danger' : 'alert-success'} mb-0`}>
+            <div className={`gd-alert gd-alert-${messageType}`} style={{ margin: 0, padding: '0.6rem 1rem' }}>
               {message}
             </div>
           )}
-          <div className="d-flex gap-2">
-            <button 
-              className="btn btn-light" 
+          <div className="gd-header-actions">
+            <button className="gd-btn gd-btn-primary" onClick={loadNotifications}>
+              <FaSync /> {t('refresh')}
+            </button>
+            <button
+              className="gd-btn gd-btn-outline"
               onClick={markAllAsRead}
               disabled={unreadCount === 0}
             >
-              <FaCheckCircle /> Mark All Read
+              <FaCheckCircle /> {t('gdMarkAllRead')}
             </button>
-            <button 
-              className="btn btn-outline-light"
+            <button
+              className="gd-btn gd-btn-outline"
               onClick={clearAllNotifications}
               disabled={notifications.length === 0}
             >
-              <FaTimes /> Clear All
+              <FaTimes /> {t('gdClearAll')}
             </button>
           </div>
         </div>
-      </div>
 
-      {/* Notification Stats */}
-      <div className="child-info-card">
-        <div className="row text-center">
-          <div className="col-md-3">
-            <div className="stat-value text-danger">{unreadCount}</div>
-            <div className="stat-label">Unread</div>
-          </div>
-          <div className="col-md-3">
-            <div className="stat-value text-warning">
-              {notifications.filter(n => n.priority === 'high').length}
+        {/* ── Stats row ── */}
+        <div className="gn-stats-grid">
+          <div className="gn-stat-card">
+            <div className="gn-stat-icon gn-stat-icon--danger"><FaBell /></div>
+            <div>
+              <div className="gn-stat-value">{unreadCount}</div>
+              <div className="gn-stat-label">{t('gdUnread')}</div>
             </div>
-            <div className="stat-label">High Priority</div>
           </div>
-          <div className="col-md-3">
-            <div className="stat-value text-info">
-              {notifications.filter(n => n.type === 'achievement').length}
+          <div className="gn-stat-card">
+            <div className="gn-stat-icon gn-stat-icon--warning"><FaExclamationTriangle /></div>
+            <div>
+              <div className="gn-stat-value">{highCount}</div>
+              <div className="gn-stat-label">{t('gdHighPriority')}</div>
             </div>
-            <div className="stat-label">Achievements</div>
           </div>
-          <div className="col-md-3">
-            <div className="stat-value text-success">
-              {notifications.filter(n => n.type === 'milestone').length}
+          <div className="gn-stat-card">
+            <div className="gn-stat-icon gn-stat-icon--info"><FaTrophy /></div>
+            <div>
+              <div className="gn-stat-value">{achievementCount}</div>
+              <div className="gn-stat-label">{t('achievements')}</div>
             </div>
-            <div className="stat-label">Milestones</div>
+          </div>
+          <div className="gn-stat-card">
+            <div className="gn-stat-icon gn-stat-icon--success"><FaCheckCircle /></div>
+            <div>
+              <div className="gn-stat-value">{milestoneCount}</div>
+              <div className="gn-stat-label">{t('gdMilestones')}</div>
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Notifications List */}
-      <div className="activities-section">
-        <h3 className="mb-3">
-          <FaBell className="me-2" />
-          Recent Notifications
-        </h3>
-        
-        {notifications.length === 0 ? (
-          <div className="text-center py-5">
-            <FaBell size={48} className="text-muted mb-3" />
-            <h4 className="text-muted">No notifications yet</h4>
-            <p className="text-muted">You'll see important updates about your child's progress here.</p>
+        {/* ── Notifications list ── */}
+        <div className="gd-card" style={{ marginBottom: '1.25rem' }}>
+          <div className="gd-card-header">
+            <FaBell /> {t('gdRecentNotifications')}
           </div>
-        ) : (
-          <div className="notifications-list">
-            {notifications.map((notification) => (
-              <div 
-                key={notification.id} 
-                className={`notification-item card mb-3 ${getPriorityClass(notification.priority)} ${!notification.read ? 'border-start border-4' : ''}`}
-              >
-                <div className="card-body">
-                  <div className="d-flex align-items-start">
-                    <div className="notification-icon me-3 mt-1">
-                      {getNotificationIcon(notification.type)}
-                    </div>
-                    <div className="flex-grow-1">
-                      <div className="d-flex justify-content-between align-items-start">
-                        <div>
-                          <h6 className={`card-title mb-1 ${!notification.read ? 'fw-bold' : ''}`}>
-                            {notification.title}
-                          </h6>
-                          <p className="card-text text-muted mb-2">
-                            {notification.message}
-                          </p>
-                          <div className="d-flex align-items-center text-muted small">
-                            <FaClock className="me-1" />
-                            {formatTimeAgo(notification.timestamp)}
-                          </div>
+          <div className="gd-card-body">
+            {notifications.length === 0 ? (
+              <div className="gn-empty">
+                <div className="gn-empty-icon"><FaBell /></div>
+                <div className="gn-empty-title">{t('gdNoNotificationsYet')}</div>
+                <div className="gn-empty-desc">{t('gdNoNotificationsDesc')}</div>
+              </div>
+            ) : (
+              <div className="gn-list">
+                {notifications.map((n) => (
+                  <div
+                    key={n.id}
+                    className={`gn-item ${priorityClass(n.priority)} ${!n.read ? 'gn-item--unread' : ''}`}
+                  >
+                    <div className="gn-item-icon">{getIcon(n.type)}</div>
+                    <div className="gn-item-body">
+                      <div className="gn-item-header">
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                          <div className="gn-item-title">{n.title}</div>
+                          {n.priority && (
+                            <span className={`gn-priority-badge gn-priority-badge--${n.priority}`}>
+                              {n.priority}
+                            </span>
+                          )}
                         </div>
-                        <div className="d-flex gap-1">
-                          {!notification.read && (
-                            <button 
-                              className="btn btn-sm btn-outline-primary"
-                              onClick={() => markAsRead(notification.id)}
-                            >
-                              Mark Read
+                        {!n.read && <div className="gn-unread-dot" title="Unread" />}
+                      </div>
+                      <div className="gn-item-message">{n.message}</div>
+                      <div className="gn-item-footer">
+                        <div className="gn-item-time">
+                          <FaClock /> {formatTimeAgo(n.timestamp)}
+                        </div>
+                        <div className="gn-item-actions">
+                          {!n.read && (
+                            <button className="gn-btn-read" onClick={() => markAsRead(n.id)}>
+                              <FaCheckCircle /> {t('gdMarkRead')}
                             </button>
                           )}
-                          <button 
-                            className="btn btn-sm btn-outline-danger"
-                            onClick={() => deleteNotification(notification.id)}
-                          >
+                          <button className="gn-btn-delete" onClick={() => deleteNotification(n.id)}>
                             <FaTimes />
                           </button>
                         </div>
                       </div>
                     </div>
                   </div>
-                </div>
+                ))}
               </div>
-            ))}
+            )}
           </div>
-        )}
-      </div>
+        </div>
 
-      {/* Notification Preferences */}
-      <div className="progress-section">
-        <h3 className="mb-3">
-          <FaBell className="me-2" />
-          Notification Preferences
-        </h3>
-        <div className="row">
-          <div className="col-md-6">
-            <div className="card">
-              <div className="card-body">
-                <h6 className="card-title">Email Notifications</h6>
-                <div className="form-check mb-2">
-                  <input className="form-check-input" type="checkbox" id="emailAchievements" defaultChecked />
-                  <label className="form-check-label" htmlFor="emailAchievements">
-                    Achievement alerts
-                  </label>
-                </div>
-                <div className="form-check mb-2">
-                  <input className="form-check-input" type="checkbox" id="emailPerformance" defaultChecked />
-                  <label className="form-check-label" htmlFor="emailPerformance">
-                    Performance alerts
-                  </label>
-                </div>
-                <div className="form-check">
-                  <input className="form-check-input" type="checkbox" id="emailWeekly" defaultChecked />
-                  <label className="form-check-label" htmlFor="emailWeekly">
-                    Weekly reports
-                  </label>
-                </div>
-              </div>
+        {/* ── Notification Preferences ── */}
+        <div className="gs-grid-2">
+          <div className="gd-card">
+            <div className="gd-card-header">
+              <FaEnvelope /> {t('gdEmailNotifications')}
+            </div>
+            <div className="gd-card-body">
+              <SettingToggle
+                id="pref-email-achievements"
+                label={t('gdAchievementAlerts')}
+                checked={prefEmail.achievements}
+                onChange={e => setPrefEmail(p => ({ ...p, achievements: e.target.checked }))}
+              />
+              <SettingToggle
+                id="pref-email-performance"
+                label={t('gdPerformanceAlerts')}
+                checked={prefEmail.performance}
+                onChange={e => setPrefEmail(p => ({ ...p, performance: e.target.checked }))}
+              />
+              <SettingToggle
+                id="pref-email-weekly"
+                label={t('gdWeeklyReports')}
+                checked={prefEmail.weekly}
+                onChange={e => setPrefEmail(p => ({ ...p, weekly: e.target.checked }))}
+              />
             </div>
           </div>
-          <div className="col-md-6">
-            <div className="card">
-              <div className="card-body">
-                <h6 className="card-title">Push Notifications</h6>
-                <div className="form-check mb-2">
-                  <input className="form-check-input" type="checkbox" id="pushAchievements" defaultChecked />
-                  <label className="form-check-label" htmlFor="pushAchievements">
-                    Achievement alerts
-                  </label>
-                </div>
-                <div className="form-check mb-2">
-                  <input className="form-check-input" type="checkbox" id="pushPerformance" />
-                  <label className="form-check-label" htmlFor="pushPerformance">
-                    Performance alerts
-                  </label>
-                </div>
-                <div className="form-check">
-                  <input className="form-check-input" type="checkbox" id="pushMilestones" defaultChecked />
-                  <label className="form-check-label" htmlFor="pushMilestones">
-                    Milestone celebrations
-                  </label>
-                </div>
-              </div>
+
+          <div className="gd-card">
+            <div className="gd-card-header accent">
+              <FaMobile /> {t('gdPushNotifications')}
+            </div>
+            <div className="gd-card-body">
+              <SettingToggle
+                id="pref-push-achievements"
+                label={t('gdAchievementAlerts')}
+                checked={prefPush.achievements}
+                onChange={e => setPrefPush(p => ({ ...p, achievements: e.target.checked }))}
+              />
+              <SettingToggle
+                id="pref-push-performance"
+                label={t('gdPerformanceAlerts')}
+                checked={prefPush.performance}
+                onChange={e => setPrefPush(p => ({ ...p, performance: e.target.checked }))}
+              />
+              <SettingToggle
+                id="pref-push-milestones"
+                label={t('gdMilestoneCelebrations')}
+                checked={prefPush.milestones}
+                onChange={e => setPrefPush(p => ({ ...p, milestones: e.target.checked }))}
+              />
             </div>
           </div>
         </div>
+
       </div>
     </div>
   );
