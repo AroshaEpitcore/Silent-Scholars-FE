@@ -369,5 +369,12 @@
 
     "ssTopPlayersRanked": "ලකුණු අනුව ශ්‍රේණිගත ඉහළ ක්‍රීඩකයෝ",
     "ssRankLabel": "ශ්‍රේණිය",
-    "ssNoScoresYet": "තවම ලකුණු නැත — ප්‍රථමයා වන්න!"
+    "ssNoScoresYet": "තවම ලකුණු නැත — ප්‍රථමයා වන්න!",
+
+    "tsResults": "ප්‍රතිඵල",
+    "tsAdaptingToTarget": "🔄 නව ඉලක්කයට අනුකූල වෙමින්: {{target}}",
+    "tsSavingProgress": "💾 සුරැකෙමින්...",
+    "tsSaveProgressNow": "💾 දැන් ප්‍රගතිය සුරකින්න",
+    "tsViewGuardianDashboard": "📊 භාරකරු උපකරණ පුවරුව බලන්න",
+    "tsProgressMessage": "📊 ඔබගේ ප්‍රගතිය භාරකරු උපකරණ පුවරුවට සුරැකෙනු ඇත"
 }

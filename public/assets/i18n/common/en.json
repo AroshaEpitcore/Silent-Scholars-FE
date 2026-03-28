@@ -383,5 +383,12 @@
 
     "ssTopPlayersRanked": "Top players ranked by score",
     "ssRankLabel": "Rank",
-    "ssNoScoresYet": "No scores yet — be the first!"
+    "ssNoScoresYet": "No scores yet — be the first!",
+
+    "tsResults": "Results",
+    "tsAdaptingToTarget": "🔄 Adapting to new target: {{target}}",
+    "tsSavingProgress": "💾 Saving...",
+    "tsSaveProgressNow": "💾 Save Progress Now",
+    "tsViewGuardianDashboard": "📊 View Guardian Dashboard",
+    "tsProgressMessage": "📊 Your progress will be saved to your Guardian Dashboard"
 }

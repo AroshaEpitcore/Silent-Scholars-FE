@@ -1,6 +1,7 @@
 // src/pages/traffic/TrafficSigns.js
 import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { getJson, apiBase } from "../../lib/api";
 import { auth, db } from "../../firebase";
 import { doc, setDoc, getDoc } from "firebase/firestore";
@@ -19,6 +20,7 @@ import "./traffic-signs.css";
  * Hides timings/device; focuses on user clarity.
  */
 export default function TrafficSigns() {
+  const { t } = useTranslation("common");
   const [classes, setClasses] = useState([]);
   const [refs, setRefs] = useState({});
   const [target, setTarget] = useState(null);
@@ -115,7 +117,7 @@ export default function TrafficSigns() {
         setRefs(data.references || {});
         if ((data.classes || []).length > 0) setTarget(data.classes[0]);
       } catch (e) {
-        setErr("Failed to load traffic sign classes.");
+        setErr(t("failedLoadTrafficSigns"));
       } finally {
         setLoading(false);
       }
@@ -162,12 +164,12 @@ export default function TrafficSigns() {
       const user = auth.currentUser;
       
       if (!user) {
-        setSaveMessage("❌ You must be logged in to save progress");
+        setSaveMessage("❌ " + t("mustBeLoggedIn"));
         return;
       }
 
       if (!sessionStartTime) {
-        setSaveMessage("❌ No session data to save");
+        setSaveMessage("❌ " + t("noSessionData"));
         return;
       }
 
@@ -213,7 +215,7 @@ export default function TrafficSigns() {
         await GuardianDataService.recordScore(scoreData);
         await GuardianDataService.recordActivity(activityData);
         await GuardianDataService.checkAchievements();
-        setSaveMessage("✅ Progress saved successfully!");
+        setSaveMessage("✅ " + t("progressSavedSuccess"));
         
         // Show success notification
         if (window.Notification && Notification.permission === 'granted') {
@@ -228,10 +230,10 @@ export default function TrafficSigns() {
           setSaveMessage("");
         }, 3000);
       } else {
-        setSaveMessage("❌ No attempts recorded yet. Practice more to save progress.");
+        setSaveMessage("❌ " + t("noAttemptsRecorded"));
       }
     } catch (error) {
-      setSaveMessage(`❌ Error saving progress: ${error.message}`);
+      setSaveMessage(`❌ ${error.message}`);
     } finally {
       setSaving(false);
     }
@@ -265,12 +267,12 @@ export default function TrafficSigns() {
           {/* Left Column - Reference and Controls */}
           <div className="ts-card">
             <div className="ts-card-header">
-              Reference Sign
+              {t("referenceSign")}
             </div>
             <div className="card-body">
               <div className="mb-3">
                 <label className="form-label" htmlFor="classSelect">
-                  Choose a sign
+                  {t("chooseASign")}
                 </label>
                 <select
                   id="classSelect"
@@ -279,14 +281,14 @@ export default function TrafficSigns() {
                   onChange={(e) => setTarget(e.target.value || null)}
                   disabled={loading || classes.length === 0}
                 >
-                  <option value="">Select a class...</option>
+                  <option value="">{t("selectAClass")}</option>
                   {classes.map((c) => (
                     <option key={c} value={c}>
                       {c}
                     </option>
                   ))}
                 </select>
-                {loading && <div className="form-text">Loading classes…</div>}
+                {loading && <div className="form-text">{t("loadingClasses")}</div>}
               </div>
 
               <div className="ts-refbox">
@@ -299,17 +301,16 @@ export default function TrafficSigns() {
                   />
                 ) : (
                   <div className="ts-help">
-                    Select a traffic sign class to start learning
+                    {t("selectTrafficSign")}
                   </div>
                 )}
               </div>
 
               <div className="ts-help text-muted mt-3">
-                Tip: Align your hand/body to match the reference as closely as
-                you can, then hold still for a second.
+                {t("tipAlignHand")}
                 {!result && target && (
                   <div className="alert alert-info mt-2" role="alert">
-                    🔄 Adapting to new target: {target}
+                    {t("tsAdaptingToTarget", { target })}
                   </div>
                 )}
               </div>
@@ -319,7 +320,7 @@ export default function TrafficSigns() {
           {/* Middle Column - Webcam */}
           <div className="ts-card">
             <div className="ts-card-header">
-              Live Recognition
+              {t("liveRecognition")}
             </div>
             <div className="card-body">
               {err && (
@@ -344,7 +345,7 @@ export default function TrafficSigns() {
           {/* Right Column - Match Ring and Predictions */}
           <div className="ts-card">
             <div className="ts-card-header">
-              Results
+              {t("tsResults")}
             </div>
             <div className="card-body">
               {/* Big Match% ring + label */}
@@ -362,22 +363,22 @@ export default function TrafficSigns() {
                     <div className="ts-match-pct">
                       {matchPct == null ? "—" : `${round(matchPct, 0)}%`}
                     </div>
-                    <div className="ts-match-label">Match</div>
+                    <div className="ts-match-label">{t("match")}</div>
                   </div>
                 </div>
                 <div className="small text-muted mt-1">
-                  Target:{" "}
+                  {t("target")}:{" "}
                   <span className="fw-semibold">{target || "—"}</span>
                 </div>
               </div>
 
               {/* Top-K predictions */}
               <div className="mt-3">
-                <div className="fw-semibold mb-2">Top predictions</div>
+                <div className="fw-semibold mb-2">{t("topPredictions")}</div>
                 <ul className="list-group ts-topk">
                   {topk.length === 0 && (
                     <li className="list-group-item d-flex justify-content-between">
-                      <span className="text-muted">No predictions yet</span>
+                      <span className="text-muted">{t("noPredictionsYet")}</span>
                     </li>
                   )}
                   {topk.map((x, idx) => (
@@ -404,7 +405,7 @@ export default function TrafficSigns() {
                         />
                       </div>
                       <div className="progress-details">
-                        <span>Confidence</span>
+                        <span>{t("confidence")}</span>
                         <span>{percent(x.prob)}</span>
                       </div>
                     </li>
@@ -418,49 +419,49 @@ export default function TrafficSigns() {
         {/* Session Statistics - Full Width */}
         {attemptCount > 0 && (
           <div className="session-stats">
-            <h6>Session Statistics</h6>
+            <h6>{t("sessionStatistics")}</h6>
             <div className="row text-center">
               <div className="col-4">
                 <div className="stat-item">
-                  <div className="stat-label">Attempts</div>
+                  <div className="stat-label">{t("attempts")}</div>
                   <div className="stat-value">{attemptCount}</div>
                 </div>
               </div>
               <div className="col-4">
                 <div className="stat-item">
-                  <div className="stat-label">Best Match</div>
+                  <div className="stat-label">{t("bestMatch")}</div>
                   <div className="stat-value text-primary">{bestMatch.toFixed(1)}%</div>
                 </div>
               </div>
               <div className="col-4">
                 <div className="stat-item">
-                  <div className="stat-label">Session Score</div>
+                  <div className="stat-label">{t("sessionScore")}</div>
                   <div className="stat-value text-success">{sessionScore}</div>
                 </div>
               </div>
             </div>
-                          <div className="text-center mt-3">
-                <div className="progress-message">
-                  📊 Your progress will be saved to your Guardian Dashboard
-                </div>
-                {saveMessage && (
-                  <div className={`alert ${saveMessage.includes('✅') ? 'alert-success' : 'alert-danger'} mt-2`}>
-                    {saveMessage}
-                  </div>
-                )}
-                <button 
-                  className="btn-save-progress"
-                  onClick={saveSessionData}
-                  disabled={saving || attemptCount === 0}
-                >
-                  {saving ? '💾 Saving...' : '💾 Save Progress Now'}
-                </button>
-                <div className="mt-2">
-                  <Link to="/guardian-dashboard" className="btn btn-outline-primary btn-sm">
-                    📊 View Guardian Dashboard
-                  </Link>
-                </div>
+            <div className="text-center mt-3">
+              <div className="progress-message">
+                {t("tsProgressMessage")}
               </div>
+              {saveMessage && (
+                <div className={`alert ${saveMessage.includes('✅') ? 'alert-success' : 'alert-danger'} mt-2`}>
+                  {saveMessage}
+                </div>
+              )}
+              <button
+                className="btn-save-progress"
+                onClick={saveSessionData}
+                disabled={saving || attemptCount === 0}
+              >
+                {saving ? t("tsSavingProgress") : t("tsSaveProgressNow")}
+              </button>
+              <div className="mt-2">
+                <Link to="/guardian-dashboard" className="btn btn-outline-primary btn-sm">
+                  {t("tsViewGuardianDashboard")}
+                </Link>
+              </div>
+            </div>
           </div>
         )}
       </div>

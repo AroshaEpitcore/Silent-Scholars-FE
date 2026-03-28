@@ -1,5 +1,6 @@
 // src/components/traffic/TrafficWebcam.js
 import React, { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { wsBase } from "../../lib/api";
 import "./TrafficWebcam.css";
 
@@ -13,6 +14,7 @@ export default function TrafficWebcam({
   videoHeight = 270,
   showStatus = true, // Changed default to true for better UX
 }) {
+  const { t } = useTranslation("common");
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const wsRef = useRef(null);
@@ -48,11 +50,11 @@ export default function TrafficWebcam({
         setLoading(false);
         if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
           setPermissionDenied(true);
-          setError("Camera permission denied. Please allow camera access to use this feature.");
+          setError(t("cameraPermissionDenied"));
         } else {
-          setError("Camera not available or access denied.");
+          setError(t("cameraNotAvailable"));
         }
-        onError?.("Webcam permission denied or unavailable.");
+        onError?.(t("cameraPermissionDenied"));
       }
     }
     startCam();
@@ -80,8 +82,8 @@ export default function TrafficWebcam({
     };
     ws.onclose = () => setConnected(false);
     ws.onerror = () => {
-      setError("WebSocket connection error.");
-      onError?.("WebSocket error.");
+      setError(t("websocketError"));
+      onError?.(t("websocketError"));
     };
     ws.onmessage = (ev) => {
       try {
@@ -160,7 +162,7 @@ export default function TrafficWebcam({
           <div className="traffic-webcam-loading">
             <div className="traffic-webcam-loading-spinner"></div>
             <div className="traffic-webcam-loading-text">
-              Initializing camera...
+              {t("initializingCamera")}
             </div>
           </div>
         )}
@@ -170,7 +172,7 @@ export default function TrafficWebcam({
           <div className="traffic-webcam-permission">
             <div className="traffic-webcam-permission-icon">📷</div>
             <div className="traffic-webcam-permission-text">
-              Camera access required
+              {t("cameraAccessRequired")}
             </div>
           </div>
         )}
@@ -195,7 +197,7 @@ export default function TrafficWebcam({
       
       {showStatus && (
         <div className={`traffic-webcam-status ${connected ? 'connected' : 'disconnected'}`}>
-          {connected ? "🟢 Connected" : "🔴 Disconnected"}
+          {connected ? `🟢 ${t("connected")}` : `🔴 ${t("disconnected")}`}
         </div>
       )}
     </div>
