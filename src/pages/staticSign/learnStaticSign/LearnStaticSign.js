@@ -5,14 +5,9 @@ import * as hands from "@mediapipe/hands";
 import * as cam from "@mediapipe/camera_utils";
 import { Hands } from "@mediapipe/hands";
 import axios from "axios";
-import { Image } from 'antd';
-import 'antd/dist/antd.css';
-import { SmileOutlined, SendOutlined, PlayCircleOutlined, VideoCameraOutlined } from '@ant-design/icons';
-import { Button, Result, PageHeader } from 'antd';
-import { Col, Row } from 'antd';
-import Test from './Test';
 import { StaticSignData } from '../../../Data/StaticSignData';
 import { useNavigate } from "react-router-dom";
+import '../static-signs.css';
 
 let time = 0;
 let landmarks = null;
@@ -30,27 +25,22 @@ export default function LearnStaticSign() {
   const [isCameraOn, setIsCameraOn] = useState(true);
   const [cameraData, setCameraData] = useState(null);
   const [SignData, setSignData] = useState(StaticSignData);
-
   const [landmarkClass, setLandmarkClass] = useState("none");
   const [probability, setProbability] = useState(0);
-  //use state for current step
   const [currentStep, setCurrentStep] = React.useState(0);
 
-  // use navigate
   let navigate = useNavigate();
 
   const routePractice = () => {
     let path = `/practise-static-sign/${SignData[currentStep].id}`;
     navigate(path);
-  }
+  };
 
-  //back to home
   const routeHome = () => {
     let path = `/static-sign-dashboard`;
     navigate(path);
-  }
+  };
 
-  //on click start learning
   const onClickStart = () => {
     setLearn(false);
     setPractice(true);
@@ -58,13 +48,8 @@ export default function LearnStaticSign() {
   };
 
   async function onResults(results) {
-    // console.log(results)
-
-    // const video = webcamRef.current.video;
     const videoWidth = webcamRef.current.video.videoWidth;
     const videoHeight = webcamRef.current.video.videoHeight;
-
-    // Set canvas width
     canvasRef.current.width = videoWidth;
     canvasRef.current.height = videoHeight;
 
@@ -77,65 +62,44 @@ export default function LearnStaticSign() {
     let totalLandmarks = [];
 
     if (results.multiHandLandmarks) {
-      console.log(results.multiHandLandmarks)
       for (const landmarks of results.multiHandLandmarks) {
         connect(canvasCtx, landmarks, hands.HAND_CONNECTIONS, {
           color: '#00FF00',
           lineWidth: 5
         });
         connect(canvasCtx, landmarks, { color: '#FF0000', lineWidth: 2 });
-
         await landmarks.map((item) => {
           totalLandmarks.push(item.x);
           totalLandmarks.push(item.y);
           totalLandmarks.push(item.z);
         });
       }
-      const data = {
-        // filename: 'test.csv',
-        // className: 'Five'.toString(),
-        temp: totalLandmarks
-      };
-
+      const data = { temp: totalLandmarks };
       if (totalLandmarks.length === 63) {
         const result = await axios.post('http://127.0.0.1:5000/predict-test', data);
-        console.log(result);
         setPredictData(result.data);
       }
-      // console.log(totalLandmarks.length);
-      // console.log(totalLandmarks);
     }
-
-    //extract hand landmarks
-
     canvasCtx.restore();
   }
-  // }
 
   const startDetection = () => {
-    // handleLeftDrawerToggle();
     setIsStarted(true);
     setIsCameraOn(true);
     const hands = new Hands({
-      locateFile: (file) => {
-        return `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`;
-      }
+      locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
     });
-
     hands.setOptions({
       maxNumHands: 2,
       modelComplexity: 1,
       minDetectionConfidence: 0.5,
       minTrackingConfidence: 0.5
     });
-
     hands.onResults(onResults);
     if (typeof webcamRef.current !== 'undefined' && webcamRef.current !== null) {
       camera = new cam.Camera(webcamRef.current.video, {
         onFrame: async () => {
-          try {
-            await hands.send({ image: webcamRef.current.video });
-          } catch (error) { }
+          try { await hands.send({ image: webcamRef.current.video }); } catch (error) {}
         },
         width: 640,
         height: 480
@@ -144,60 +108,131 @@ export default function LearnStaticSign() {
       setCameraData(camera);
     }
   };
-  // ================================
+
   const stopDetection = () => {
     camera.stop();
     setIsStarted(false);
     setIsCameraOn(false);
   };
+
   return (
-    <>
-      <PageHeader
-        className="site-page-header"
-        onBack={() => routeHome()}
-        title="Static Sign"
-        subTitle="Learn a static sign"
-        style={{ border: '1px solid rgb(235, 237, 240)' }}
-      />
-      <Row justify="center" align="middle" style={{ marginTop: '50px' }}>
-        <Col span={8} align="center" justify="center">
-          <Image
-            width={400}
-            src={SignData[currentStep].alphabetImage} //display the letter
-          />
-        </Col>
-        <Col span={8} align="center" justify="center">
-          <Image
-            width={320}
-            src={SignData[currentStep].signImage} //display the sign of the displayed letter
-          />
+    <div className="ss-page">
+      <div className="ss-container">
 
-        </Col>
-        <Col span={8} align="center" justify="center">
-          <Result
-            icon={<PlayCircleOutlined />}
-            title="Click Start to Practice this Sign"
-            extra={<Button type="primary" onClick={routePractice}>Start</Button>}
-          />
+        {/* Page Header */}
+        <div className="ss-page-header">
+          <button className="ss-back-btn" onClick={routeHome}>← Back</button>
+          <div>
+            <div className="ss-page-title">Static Sign</div>
+            <div className="ss-page-subtitle">Learn a static sign step by step</div>
+          </div>
+          <div className="ss-header-badge">
+            Step {currentStep + 1} / {SignData.length}
+          </div>
+        </div>
 
-          {currentStep < SignData.length - 1 ? (
-          <Button type="primary" danger shape="round" icon={<SendOutlined />} size={'large'} onClick={() => setCurrentStep(currentStep + 1)}>
-            Learn Next Sign
-          </Button>
-        ) : (
-          <Button type="primary" danger shape="round" icon={<SendOutlined />} size={'large'} onClick={routeHome}>
-            Back to Home
-          </Button>
-        )}
+        {/* 3-Column Grid */}
+        <div className="ss-grid">
 
+          {/* Col 1 — Alphabet image */}
+          <div className="ss-card">
+            <div className="ss-card-header">Letter</div>
+            <div className="ss-card-body">
+              <div className="ss-img-box">
+                <img
+                  src={SignData[currentStep].alphabetImage}
+                  alt={`Alphabet ${SignData[currentStep].name}`}
+                />
+              </div>
+              <div className="ss-sign-name">{SignData[currentStep].name}</div>
+              <div className="ss-img-label">Current Letter</div>
+            </div>
+          </div>
 
+          {/* Col 2 — Sign language image */}
+          <div className="ss-card">
+            <div className="ss-card-header accent">Sign Language</div>
+            <div className="ss-card-body">
+              <div className="ss-img-box">
+                <img
+                  src={SignData[currentStep].signImage}
+                  alt={`Sign for ${SignData[currentStep].name}`}
+                />
+              </div>
+              <div className="ss-img-label">How to sign it</div>
+              <div className="ss-divider"></div>
+              <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', textAlign: 'center', lineHeight: 1.5 }}>
+                Study the hand position carefully before practicing
+              </div>
+            </div>
+          </div>
 
+          {/* Col 3 — Controls */}
+          <div className="ss-card">
+            <div className="ss-card-header success">Practice</div>
+            <div className="ss-card-body">
+              <div className="ss-result-box info">
+                <span className="ss-result-icon">🎯</span>
+                <div className="ss-result-title">Ready to Practice?</div>
+                <div className="ss-result-subtitle">
+                  Click Start to practice this sign with your webcam
+                </div>
+              </div>
 
+              <div className="ss-btn-group">
+                <button className="ss-btn-primary" onClick={routePractice}>
+                  ▶ Start Practice
+                </button>
 
+                {currentStep < SignData.length - 1 ? (
+                  <button
+                    className="ss-btn-accent"
+                    onClick={() => setCurrentStep(currentStep + 1)}
+                  >
+                    Learn Next Sign →
+                  </button>
+                ) : (
+                  <button className="ss-btn-outline" onClick={routeHome}>
+                    ← Back to Dashboard
+                  </button>
+                )}
+              </div>
 
+              <div className="ss-divider"></div>
 
-        </Col>
-      </Row>
-    </>
+              {/* Progress dots */}
+              <div style={{ textAlign: 'center' }}>
+                <div className="ss-img-label" style={{ marginBottom: '0.5rem' }}>Progress</div>
+                <div style={{ display: 'flex', justifyContent: 'center', gap: '5px', flexWrap: 'wrap' }}>
+                  {SignData.slice(0, Math.min(SignData.length, 12)).map((_, i) => (
+                    <div
+                      key={i}
+                      style={{
+                        width: '10px',
+                        height: '10px',
+                        borderRadius: '50%',
+                        background: i === currentStep
+                          ? 'linear-gradient(135deg,#667eea,#764ba2)'
+                          : i < currentStep
+                          ? 'linear-gradient(135deg,#43e97b,#38f9d7)'
+                          : '#e2e8f0',
+                        transition: 'background 0.3s'
+                      }}
+                    />
+                  ))}
+                  {SignData.length > 12 && (
+                    <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', alignSelf: 'center' }}>
+                      +{SignData.length - 12}
+                    </span>
+                  )}
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
   );
 }
