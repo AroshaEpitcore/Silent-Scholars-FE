@@ -1,46 +1,65 @@
 import React from "react";
-import CatModel from "../../../components/animals/cat/Catmodel";
-import CatSignlanguage from "../../../components/animals/cat/Catsignlanguage";
-import "./styles.css";
-import { GrClose, GrLinkNext } from "react-icons/gr";
-import { useNavigate } from "react-router-dom";
-import { PageHeader } from "antd";
+import { Link, useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import CowModel from "../../../components/animals/cow/Cowmodel";
-
+import CowSignlanguage from "../../../components/animals/cow/Cowsignlanguage";
+import { FaPaw, FaArrowLeft, FaPlay } from "react-icons/fa";
+import "../animals.css";
 
 export default function LearnCow() {
-
-    let navigate = useNavigate();
-    const routeDashboard = () => {
-        let path = `/dashboard-animals`;
-        navigate(path);
-    }
-    const routePractise = () => {
-        let path = `/practise-cow`;
-        navigate(path);
-    }
+    const { t } = useTranslation("common");
+    const navigate = useNavigate();
 
     return (
-        <>
-            <PageHeader
-                className="site-page-header"
-                title="Cow Sign"
-                onBack={() => routeDashboard()}
-                subTitle="Learn sign language for cow"
-                style={{ border: '1px solid rgb(235, 237, 240)' }}
-            />
-            <GrClose onClick={routeDashboard} className="position-absolute" style={{ marginRight: "110px", marginTop: "75px", right: "0", zIndex: "999" }} />
-            <div className="container position-absolute top-50 start-50 translate-middle">
-                <div className="row">
-                    <div className="col columnCss" style={{ marginTop: "300px", border: "2px solid black", width: "380px", height: "380px", marginRight: "100px" }}>
-                        <CowModel />
+        <div className="an-page">
+            <div className="an-container">
+
+                {/* Breadcrumb */}
+                <div className="an-breadcrumb">
+                    <Link to="/dashboard-animals">{t("DynamicSign")}</Link>
+                    <span className="an-breadcrumb-sep">›</span>
+                    <span className="an-breadcrumb-current"><FaPaw style={{ marginRight: 4 }} />{t("learnCow")}</span>
+                </div>
+
+                {/* 2-column grid */}
+                <div className="an-learn-grid">
+
+                    {/* Left: 3D Model */}
+                    <div className="an-card">
+                        <div className="an-card-header">
+                            <FaPaw /> {t("learnCow")}
+                        </div>
+                        <div className="an-card-body">
+                            <div className="an-model-box">
+                                <CowModel />
+                            </div>
+                        </div>
                     </div>
-                    <div className="col columnCss" style={{ marginTop: "150px" }}>
-                        <CatSignlanguage />
+
+                    {/* Right: Sign language video */}
+                    <div className="an-card">
+                        <div className="an-card-header accent">
+                            🎬 {t("signLanguageVideo")}
+                        </div>
+                        <div className="an-card-body">
+                            <div className="an-video-box">
+                                <CowSignlanguage />
+                            </div>
+                        </div>
                     </div>
                 </div>
+
+                {/* Actions */}
+                <div className="an-actions">
+                    <button className="an-btn-outline" onClick={() => navigate("/dashboard-animals")}>
+                        <FaArrowLeft /> {t("backToDashboard")}
+                    </button>
+                    <button className="an-btn-primary" onClick={() => navigate("/practise-cow")}>
+                        <FaPlay /> {t("startPractice")}
+                    </button>
+                </div>
+
             </div>
-            <button onClick={routePractise} className="position-absolute btn btn-primary" style={{ marginRight: "110px", right: "0", bottom: "0", zIndex: "999" }}>Practise <GrLinkNext /></button>
-        </>
+        </div>
     );
 }

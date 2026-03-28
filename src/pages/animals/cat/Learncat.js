@@ -1,45 +1,65 @@
 import React from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import CatModel from "../../../components/animals/cat/Catmodel";
 import CatSignlanguage from "../../../components/animals/cat/Catsignlanguage";
-import "./styles.css";
-import { GrClose, GrLinkNext } from "react-icons/gr";
-import { useNavigate } from "react-router-dom";
-import { PageHeader } from "antd";
-
+import { FaCat, FaArrowLeft, FaPlay } from "react-icons/fa";
+import "../animals.css";
 
 export default function LearnCat() {
-
-    let navigate = useNavigate();
-    const routeDashboard = () => {
-        let path = `/dashboard-animals`;
-        navigate(path);
-    }
-    const routePractise = () => {
-        let path = `/practise-cat`;
-        navigate(path);
-    }
+    const { t } = useTranslation("common");
+    const navigate = useNavigate();
 
     return (
-        <>
-            <PageHeader
-                className="site-page-header"
-                title="Cat Sign"
-                onBack={() => routeDashboard()}
-                subTitle="Learn sign language for cat"
-                style={{ border: '1px solid rgb(235, 237, 240)' }}
-            />
-            <GrClose onClick={routeDashboard} className="position-absolute" style={{ marginRight: "110px", marginTop: "75px", right: "0", zIndex: "999" }} />
-            <div className="container position-absolute top-50 start-50 translate-middle">
-                <div className="row">
-                    <div className="col columnCss" style={{ marginTop: "330px", border: "1px solid #98B7C9", width: "320px", height: "330px", marginRight: "100px"  ,backgroundColor:"#E2EEF5"}}>
-                        <CatModel />
+        <div className="an-page">
+            <div className="an-container">
+
+                {/* Breadcrumb */}
+                <div className="an-breadcrumb">
+                    <Link to="/dashboard-animals">{t("DynamicSign")}</Link>
+                    <span className="an-breadcrumb-sep">›</span>
+                    <span className="an-breadcrumb-current"><FaCat style={{ marginRight: 4 }} />{t("learnCat")}</span>
+                </div>
+
+                {/* 2-column grid */}
+                <div className="an-learn-grid">
+
+                    {/* Left: 3D Model */}
+                    <div className="an-card">
+                        <div className="an-card-header">
+                            <FaCat /> {t("learnCat")}
+                        </div>
+                        <div className="an-card-body">
+                            <div className="an-model-box">
+                                <CatModel />
+                            </div>
+                        </div>
                     </div>
-                    <div className="col columnCss" style={{ marginTop: "150px" }}>
-                        <CatSignlanguage />
+
+                    {/* Right: Sign language video */}
+                    <div className="an-card">
+                        <div className="an-card-header accent">
+                            🎬 {t("signLanguageVideo")}
+                        </div>
+                        <div className="an-card-body">
+                            <div className="an-video-box">
+                                <CatSignlanguage />
+                            </div>
+                        </div>
                     </div>
                 </div>
+
+                {/* Actions */}
+                <div className="an-actions">
+                    <button className="an-btn-outline" onClick={() => navigate("/dashboard-animals")}>
+                        <FaArrowLeft /> {t("backToDashboard")}
+                    </button>
+                    <button className="an-btn-primary" onClick={() => navigate("/practise-cat")}>
+                        <FaPlay /> {t("startPractice")}
+                    </button>
+                </div>
+
             </div>
-            <button onClick={routePractise} className="position-absolute btn btn-primary" style={{ marginRight: "110px", right: "0", bottom: "0", zIndex: "999" }}>Practise <GrLinkNext /></button>
-        </>
+        </div>
     );
 }

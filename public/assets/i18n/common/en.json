@@ -467,5 +467,22 @@
     "gsSocialFeatures": "Social Features",
     "gsShowLeaderboard": "Show Leaderboard",
     "gsAllowSharing": "Allow Sharing Achievements",
-    "gsShowCommunity": "Show Community Features"
+    "gsShowCommunity": "Show Community Features",
+
+    "signLanguageVideo": "Sign Language Video",
+    "backToDashboard": "Back to Dashboard",
+    "startPractice": "Start Practice",
+    "referencePose": "Reference Pose",
+    "liveCamera": "Live Camera",
+    "status": "Status",
+    "readyToPractice": "Ready to Practice",
+    "practiceDesc": "Position your hand in front of the camera and press Start to begin detection.",
+    "startDetection": "Start Detection",
+    "currentSign": "Current Sign",
+    "holdPoseHint": "Hold the pose until the confidence bar turns green.",
+    "poseLabel": "Pose {{n}}",
+    "practiceComplete": "All poses completed! Great work!",
+    "backToLearn": "Back to Learn",
+    "noHandDetected": "No Hand Detected",
+    "noHandDesc": "Show your hand clearly in front of the camera to start detection."
 }

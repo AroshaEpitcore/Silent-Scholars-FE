@@ -453,5 +453,22 @@
     "gsSocialFeatures": "සමාජ විශේෂාංග",
     "gsShowLeaderboard": "ලීඩර්බෝඩ් පෙන්වන්න",
     "gsAllowSharing": "ජයග්‍රහණ බෙදා ගැනීමට අවසර දෙන්න",
-    "gsShowCommunity": "ප්‍රජා විශේෂාංග පෙන්වන්න"
+    "gsShowCommunity": "ප්‍රජා විශේෂාංග පෙන්වන්න",
+
+    "signLanguageVideo": "සාංකේතික භාෂා වීඩියෝව",
+    "backToDashboard": "ඩැෂ්බෝඩ් වෙත ආපසු",
+    "startPractice": "පුහුණුව ආරම්භ කරන්න",
+    "referencePose": "යොමු ඉරියව්ව",
+    "liveCamera": "සජීවී කැමරාව",
+    "status": "තත්ත්වය",
+    "readyToPractice": "පුහුණුවට සූදානම්",
+    "practiceDesc": "ඔබේ අත කැමරාව ඉදිරිපිට තබා හඳුනාගැනීම ආරම්භ කිරීමට ආරම්භය 누르න්න.",
+    "startDetection": "හඳුනාගැනීම ආරම්භ කරන්න",
+    "currentSign": "වත්මන් සංඥාව",
+    "holdPoseHint": "විශ්වාසනීයතා දර්ශකය කොළ වන තෙක් ඉරියව්ව තබා ගන්න.",
+    "poseLabel": "ඉරියව්ව {{n}}",
+    "practiceComplete": "සියලු ඉරියව් සම්පූර්ණ විය! හොඳ වැඩ!",
+    "backToLearn": "ඉගෙනීමට ආපසු",
+    "noHandDetected": "අත හඳුනා නොගත්තේය",
+    "noHandDesc": "හඳුනාගැනීම ආරම්භ කිරීමට ඔබේ අත කැමරාව ඉදිරිපිට පැහැදිලිව රඳවා ගන්න."
 }

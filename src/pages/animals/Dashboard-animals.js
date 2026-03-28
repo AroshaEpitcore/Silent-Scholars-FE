@@ -1,10 +1,12 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { FaCat, FaDog, FaCrown, FaPaw, FaHorse, FaFish } from 'react-icons/fa';
 import './Dashboard-animals.css';
 
 export default function DashboardAnimals() {
 
+    const { t } = useTranslation("common");
     let navigate = useNavigate();
     const routeLearnCat = () => {
         let path = `/learn-cat`;
@@ -26,8 +28,8 @@ export default function DashboardAnimals() {
     const animals = [
         {
             id: 1,
-            name: "Learn Cat",
-            description: "Learn sign language for cat and practice and get feedback.",
+            name: t("learnCat"),
+            description: t("learnAnimalDesc", { animal: "cat" }),
             image: "images/sign-language.jpg",
             icon: <FaCat />,
             onClick: routeLearnCat,
@@ -35,8 +37,8 @@ export default function DashboardAnimals() {
         },
         {
             id: 2,
-            name: "Learn Dog",
-            description: "Learn sign language for dog and practice and get feedback.",
+            name: t("learnDog"),
+            description: t("learnAnimalDesc", { animal: "dog" }),
             image: "images/sign-language.jpg",
             icon: <FaDog />,
             onClick: routeLearnDog,
@@ -44,8 +46,8 @@ export default function DashboardAnimals() {
         },
         {
             id: 3,
-            name: "Learn Lion",
-            description: "Learn sign language for lion and practice and get feedback.",
+            name: t("learnLion"),
+            description: t("learnAnimalDesc", { animal: "lion" }),
             image: "images/sign-language.jpg",
             icon: <FaCrown />,
             onClick: routeLearnLion,
@@ -53,8 +55,8 @@ export default function DashboardAnimals() {
         },
         {
             id: 4,
-            name: "Learn Cow",
-            description: "Learn sign language for Cow and practice and get feedback.",
+            name: t("learnCow"),
+            description: t("learnAnimalDesc", { animal: "cow" }),
             image: "images/sign-language.jpg",
             icon: <FaPaw />,
             onClick: routeLearnCow,
@@ -62,8 +64,8 @@ export default function DashboardAnimals() {
         },
         {
             id: 5,
-            name: "Learn Horse",
-            description: "Learn sign language for Horse and practice and get feedback.",
+            name: t("learnHorse"),
+            description: t("learnAnimalDesc", { animal: "horse" }),
             image: "images/sign-language.jpg",
             icon: <FaHorse />,
             onClick: null,
@@ -71,8 +73,8 @@ export default function DashboardAnimals() {
         },
         {
             id: 6,
-            name: "Learn Fish",
-            description: "Learn sign language for fish and practice and get feedback.",
+            name: t("learnFish"),
+            description: t("learnAnimalDesc", { animal: "fish" }),
             image: "images/sign-language.jpg",
             icon: <FaFish />,
             onClick: null,
@@ -83,7 +85,7 @@ export default function DashboardAnimals() {
     return (
         <div className="animals-dashboard">
             <div className="animals-header">
-                <h1>Choose any sign language and start learning</h1>
+                <h1>{t("chooseSignLanguage")}</h1>
             </div>
             <div className="animals-grid">
                 {animals.map((animal) => (

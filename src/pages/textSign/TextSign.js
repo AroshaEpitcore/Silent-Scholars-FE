@@ -1,16 +1,13 @@
 import React, { useState } from "react";
+import { Link } from "react-router-dom";
 import axios from "axios";
-import SpeechRecognition, {
-  useSpeechRecognition,
-} from "react-speech-recognition";
-import FileUpload from "../../components/texttosign/FileUpload";
-import Speech from "../../components/texttosign/Speech";
-import UserFulWord from "../../components/texttosign/UserFulWord";
+import SpeechRecognition, { useSpeechRecognition } from "react-speech-recognition";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { SyncLoader } from "react-spinners";
-import { ScaleLoader } from "react-spinners";
+import { SyncLoader, ScaleLoader } from "react-spinners";
 import { useTranslation } from "react-i18next";
+import { FaFont, FaUpload, FaMicrophone, FaPlay } from "react-icons/fa";
+import "./text-sign.css";
 
 export default function TextSign() {
   const { t } = useTranslation("common");
@@ -18,73 +15,47 @@ export default function TextSign() {
   const [file, setFile] = useState(null);
   const [isFileLoading, setIsFileLoading] = useState(false);
   const [isVoiceLoading, setIsVoiceLoading] = useState(false);
-
-  const [isFileClicked, setIsFileClicked] = useState(false);
-  const [isVoiceClicked, setIsVoiceClicked] = useState(false);
-
-  const fileClicked = () => {
-    setIsFileClicked(true);
-    setIsVoiceClicked(false);
-  }
-
-  const voiceClicked = () => {
-    setIsVoiceClicked(true);
-    setIsFileClicked(false);
-  }
+  const [activeMethod, setActiveMethod] = useState(null); // "file" | "voice"
 
   const getPdfUsefulWords = async () => {
     try {
-      await axios.get("/pdfScan").then((res) => {
-        setUsefulWords(res.data.useful_words);
-        toast.success(t("PDFScanSuccessful"));
-      });
-    } catch (error) {
+      const res = await axios.get("/pdfScan");
+      setUsefulWords(res.data.useful_words);
+      toast.success(t("PDFScanSuccessful"));
+    } catch {
       toast.error(t("PDFScanError"));
     }
   };
 
   const getAudioUsefulWords = async () => {
     try {
-      await axios.get("/audioExtraction").then((res) => {
-        setUsefulWords(res.data.useful_words);
-        toast.success(t("AudioExtractSuccessful"));
-      });
+      const res = await axios.get("/audioExtraction");
+      setUsefulWords(res.data.useful_words);
+      toast.success(t("AudioExtractSuccessful"));
     } catch (error) {
       console.log(error);
       toast.error(t("AudioExtractionError"));
     }
   };
 
-  const handleSelectFile = (e) => {
-    setFile(e.target.files[0]);
-  };
+  const handleSelectFile = (e) => setFile(e.target.files[0]);
 
   const handleUploadFile = async () => {
-    if (file === null) {
-      toast.error(t("Pleaseuploadafile"));
-    } else {
-      setIsFileLoading(true);
-    }
-
+    if (!file) { toast.error(t("Pleaseuploadafile")); return; }
+    setIsFileLoading(true);
     const formData = new FormData();
     formData.append("file", file);
-    const fileExtension = file.name.split(".").pop();
-
-    await axios
-      .post("/upload", formData)
-      .then((res) => {
-        setIsFileLoading(false);
-        toast.success(t("FileUploadSuccessful"));
-        if (fileExtension === "pdf") {
-          getPdfUsefulWords();
-        }
-        if (fileExtension === "m4a") {
-          getAudioUsefulWords();
-        }
-      })
-      .catch((err) => {
-        toast.error(t("FileUploadError"));
-      });
+    const ext = file.name.split(".").pop();
+    try {
+      await axios.post("/upload", formData);
+      setIsFileLoading(false);
+      toast.success(t("FileUploadSuccessful"));
+      if (ext === "pdf") getPdfUsefulWords();
+      if (ext === "m4a") getAudioUsefulWords();
+    } catch {
+      setIsFileLoading(false);
+      toast.error(t("FileUploadError"));
+    }
   };
 
   const {
@@ -93,108 +64,161 @@ export default function TextSign() {
     resetTranscript,
     browserSupportsSpeechRecognition,
   } = useSpeechRecognition();
+
   const startListening = () => {
     SpeechRecognition.startListening({ continuous: true });
     setIsVoiceLoading(true);
-  }
-
+  };
   const stopListening = () => {
-      SpeechRecognition.stopListening();
-      setIsVoiceLoading(false);
-  }
-
-  if (!browserSupportsSpeechRecognition) {
-    return <span>Browser doesn't support speech recognition.</span>;
-  }
+    SpeechRecognition.stopListening();
+    setIsVoiceLoading(false);
+  };
 
   const onSubmit = (e) => {
     e.preventDefault();
-
-    const input_Sentence = {
-      sentence: transcript,
-    };
-
-    if (input_Sentence.sentence === "") {
-      toast.error(t("Pleasestartrecording"));
-    }
-    if (input_Sentence.sentence !== "" && usefulWords.length === 0) {
-      toast.error(t("Nousefulwordsfound"));
-    }
-    axios
-      .post("/typeSentence", input_Sentence)
-      .then((res) => {
-        setUsefulWords(res.data.useful_words);
-        toast.success(t("VoiceExtractionSuccessful"))
-      })
-      .catch((err) => {
-        toast.error(t("VoiceExtractionError"))
-      });
+    if (!transcript) { toast.error(t("Pleasestartrecording")); return; }
+    axios.post("/typeSentence", { sentence: transcript })
+      .then((res) => { setUsefulWords(res.data.useful_words); toast.success(t("VoiceExtractionSuccessful")); })
+      .catch(() => toast.error(t("VoiceExtractionError")));
   };
 
+  if (!browserSupportsSpeechRecognition) {
+    return <span>{t("browserNoSpeech")}</span>;
+  }
 
   return (
-    <>
-      <div className="container">
-        <div className="row d-flex align-items-center justify-content-center">
-          <ToastContainer
-            position="bottom-center"
-            theme="colored"
-            autoClose={2000}
-          />
-          <div className="col-md-6">
-            {/* add colapse */}
-            <div className="d-grid mb-4">
-              <button
-                className="btn btn-success mb-3"
-                type="button"
-                onClick={fileClicked}
-              >
-                {t("UploadFile")}
-              </button>
-              {isFileClicked && (
-              <>
-                <FileUpload
-                  handleSelectFile={handleSelectFile}
-                  handleUploadFile={handleUploadFile}
-                />
-                <SyncLoader loading={isFileLoading} color="purple" />
-              </>
-              )}
+    <div className="ts2-page">
+      <ToastContainer position="bottom-center" theme="colored" autoClose={2000} />
+      <div className="ts2-container">
 
-              <button
-                className="btn btn-dark mt-5 mb-2"
-                type="button"
-                onClick={voiceClicked}
-              >
-                {t("VoiceRecording")}
-              </button>
-              {isVoiceClicked && (
-                <>
-                <Speech
-                  onSubmit={onSubmit}
-                  transcript={transcript}
-                  listening={listening}
-                  resetTranscript={resetTranscript}
-                  startListening={startListening}
-                  stopListening={stopListening}
-                />
-                <ScaleLoader loading={isVoiceLoading} color="purple" />
-              </>
-              )}
-            </div>
+        <div className="ts2-breadcrumb">
+          <Link to="/dashboard">{t("dashboard")}</Link>
+          <span className="ts2-breadcrumb-sep">›</span>
+          <span className="ts2-breadcrumb-current">{t("textToSign")}</span>
+        </div>
 
-            <UserFulWord usefulWords={usefulWords} />
-          </div>
-          <div className="col-md-6">
-            <img
-              src="https://1.bp.blogspot.com/-YQyl46fmJN8/XpJ5y0N39MI/AAAAAAABADc/pE0daFBPKe4egq46JW5rt0hSGyUXaWVlgCLcBGAsYHQ/s1600/giphy%2B%25281%2529.gif"
-              alt="textSign"
-              width="700vh"
-              height="700vh"
-            />
+        <div className="ts2-hero">
+          <div className="ts2-hero-icon"><FaFont /></div>
+          <div>
+            <div className="ts2-hero-title">{t("textToSign")}</div>
+            <div className="ts2-hero-sub">{t("textToSignDescription")}</div>
           </div>
         </div>
+
+        <div className="ts2-grid">
+
+          {/* Input card */}
+          <div className="ts2-card">
+            <div className="ts2-card-header">
+              <FaUpload /> {t("UploadFile")} / <FaMicrophone /> {t("VoiceRecording")}
+            </div>
+            <div className="ts2-card-body">
+
+              <div className="ts2-method-btns">
+                <button
+                  className={`ts2-method-btn ${activeMethod === "file" ? "active" : ""}`}
+                  onClick={() => setActiveMethod(activeMethod === "file" ? null : "file")}
+                >
+                  <FaUpload /> {t("UploadFile")}
+                </button>
+                <button
+                  className={`ts2-method-btn ${activeMethod === "voice" ? "active" : ""}`}
+                  onClick={() => setActiveMethod(activeMethod === "voice" ? null : "voice")}
+                >
+                  <FaMicrophone /> {t("VoiceRecording")}
+                </button>
+              </div>
+
+              {activeMethod === "file" && (
+                <div className="ts2-input-panel">
+                  <div className="ts2-file-row">
+                    <input
+                      type="file"
+                      onChange={handleSelectFile}
+                      className="ts2-file-input"
+                      id="fileInput"
+                    />
+                    <button className="ts2-btn-convert" onClick={handleUploadFile}>
+                      {t("convertToSign")}
+                    </button>
+                  </div>
+                  {isFileLoading && (
+                    <div className="ts2-loader">
+                      <SyncLoader loading={isFileLoading} color="#667eea" size={8} />
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {activeMethod === "voice" && (
+                <div className="ts2-input-panel">
+                  <div className="ts2-mic-status">
+                    <div className={`ts2-mic-dot ${listening ? "listening" : ""}`} />
+                    {t("microphone")}: {listening ? t("on") : t("off")}
+                  </div>
+                  <div className="ts2-voice-controls">
+                    <button className="ts2-btn-mic start" onClick={startListening}>{t("start")}</button>
+                    <button className="ts2-btn-mic stop" onClick={stopListening}>{t("stop")}</button>
+                    <button className="ts2-btn-mic reset" onClick={resetTranscript}>{t("reset")}</button>
+                  </div>
+                  <textarea
+                    readOnly
+                    className="ts2-transcript"
+                    placeholder={t("saySomething")}
+                    value={transcript}
+                  />
+                  <button className="ts2-btn-convert" onClick={onSubmit}>
+                    {t("convertToSign")}
+                  </button>
+                  {isVoiceLoading && (
+                    <div className="ts2-loader">
+                      <ScaleLoader loading={isVoiceLoading} color="#667eea" height={20} />
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {activeMethod === null && (
+                <div className="ts2-empty">
+                  <div className="ts2-empty-icon">👆</div>
+                  <div className="ts2-empty-text">{t("PleaseClickUploadFileOrVoiceRecording")}</div>
+                </div>
+              )}
+
+            </div>
+          </div>
+
+          {/* Results card */}
+          <div className="ts2-card">
+            <div className="ts2-card-header success">
+              🤟 {t("convertToSign")}
+            </div>
+            <div className="ts2-card-body">
+              {usefulWords.length > 0 ? (
+                <ul className="ts2-words-list">
+                  {usefulWords.map((word) => (
+                    <li className="ts2-word-item" key={word}>
+                      {word}
+                      <button className="ts2-word-play">
+                        <img
+                          src="https://img.icons8.com/ios-glyphs/20/ffffff/play--v1.png"
+                          alt="play"
+                        />
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <div className="ts2-empty">
+                  <div className="ts2-empty-icon">🤟</div>
+                  <div className="ts2-empty-text">{t("PleaseClickUploadFileOrVoiceRecording")}</div>
+                </div>
+              )}
+            </div>
+          </div>
+
+        </div>
       </div>
-    </>
+    </div>
   );
 }
