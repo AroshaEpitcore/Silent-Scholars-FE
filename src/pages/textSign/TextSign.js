@@ -1,40 +1,117 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import axios from "axios";
-import SpeechRecognition, { useSpeechRecognition } from "react-speech-recognition";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { SyncLoader, ScaleLoader } from "react-spinners";
+import { SyncLoader } from "react-spinners";
 import { useTranslation } from "react-i18next";
-import { FaFont, FaUpload, FaMicrophone, FaPlay } from "react-icons/fa";
+import { FaFont, FaUpload } from "react-icons/fa";
+import { StaticSignData } from "../../Data/StaticSignData";
+import { SinhalaToEnglish } from "../../Data/EnglishToSinhala";
 import "./text-sign.css";
+
+const FLASK_URL = "http://localhost:5000";
+
+// Build letter → sign image map from StaticSignData
+const signMap = {};
+StaticSignData.forEach(item => { signMap[item.name.toUpperCase()] = item.signImage; });
+
+// Detect Sinhala characters (Unicode range U+0D80–U+0DFF)
+const isSinhalaWord = (word) => /[\u0D80-\u0DFF]/.test(word);
+
+// Layer 2: MyMemory REST API (si → en)
+const translateViaMymemory = async (word) => {
+  try {
+    const res = await axios.get(
+      `https://api.mymemory.translated.net/get?q=${encodeURIComponent(word)}&langpair=si|en`,
+      { timeout: 5000 }
+    );
+    const translated = res.data?.responseData?.translatedText;
+    if (translated && translated !== word && !translated.startsWith('[')) {
+      return translated.toLowerCase().trim();
+    }
+    return null;
+  } catch {
+    return null;
+  }
+};
+
+// 3-Layer translation for a single word
+const translateWord = async (word) => {
+  const sinhala = isSinhalaWord(word);
+  if (!sinhala) {
+    return { original: word, english: word.toLowerCase(), isSinhala: false };
+  }
+  // Layer 1: local dictionary
+  const local = SinhalaToEnglish[word];
+  if (local) {
+    return { original: word, english: local.toLowerCase(), isSinhala: true, layer: 1 };
+  }
+  // Layer 2: MyMemory API
+  const api = await translateViaMymemory(word);
+  if (api) {
+    return { original: word, english: api, isSinhala: true, layer: 2 };
+  }
+  // Layer 3: show original as-is
+  return { original: word, english: word, isSinhala: true, layer: 3 };
+};
+
+// SignCard component
+function SignCard({ card }) {
+  const { original, english, isSinhala, layer } = card;
+  const isTranslated = isSinhala && english !== original;
+  const letters = english.toUpperCase().replace(/[^A-Z]/g, '').split('').filter(Boolean);
+
+  return (
+    <div className={`ts2-sign-card ${isSinhala ? 'sinhala' : ''}`}>
+      <div className="ts2-sign-card-title">{original}</div>
+      {isTranslated && (
+        <div className="ts2-sign-card-translated">
+          {layer === 1 ? '📖' : layer === 2 ? '🌐' : ''} → {english}
+        </div>
+      )}
+      <div className="ts2-letter-row">
+        {letters.length > 0 ? letters.map((letter, i) => (
+          <div className="ts2-letter-item" key={i}>
+            {signMap[letter]
+              ? <img className="ts2-letter-img" src={signMap[letter]} alt={letter} />
+              : <div className="ts2-letter-missing">{letter}</div>
+            }
+            <div className="ts2-letter-label">{letter}</div>
+          </div>
+        )) : (
+          <div className="ts2-no-signs">No sign data available</div>
+        )}
+      </div>
+    </div>
+  );
+}
 
 export default function TextSign() {
   const { t } = useTranslation("common");
-  const [usefulWords, setUsefulWords] = useState([]);
+  const [signCards, setSignCards] = useState([]);
   const [file, setFile] = useState(null);
   const [isFileLoading, setIsFileLoading] = useState(false);
-  const [isVoiceLoading, setIsVoiceLoading] = useState(false);
-  const [activeMethod, setActiveMethod] = useState(null); // "file" | "voice"
+  const [isTranslating, setIsTranslating] = useState(false);
 
-  const getPdfUsefulWords = async () => {
+  const processWords = async (words) => {
+    if (!words || words.length === 0) return;
+    setIsTranslating(true);
     try {
-      const res = await axios.get("/pdfScan");
-      setUsefulWords(res.data.useful_words);
-      toast.success(t("PDFScanSuccessful"));
-    } catch {
-      toast.error(t("PDFScanError"));
+      const results = await Promise.all(words.map(translateWord));
+      setSignCards(results);
+    } finally {
+      setIsTranslating(false);
     }
   };
 
-  const getAudioUsefulWords = async () => {
+  const getPdfUsefulWords = async () => {
     try {
-      const res = await axios.get("/audioExtraction");
-      setUsefulWords(res.data.useful_words);
-      toast.success(t("AudioExtractSuccessful"));
-    } catch (error) {
-      console.log(error);
-      toast.error(t("AudioExtractionError"));
+      const res = await axios.get(`${FLASK_URL}/pdfScan`);
+      toast.success(t("PDFScanSuccessful"));
+      processWords(res.data.useful_words);
+    } catch {
+      toast.error(t("PDFScanError"));
     }
   };
 
@@ -45,46 +122,16 @@ export default function TextSign() {
     setIsFileLoading(true);
     const formData = new FormData();
     formData.append("file", file);
-    const ext = file.name.split(".").pop();
     try {
-      await axios.post("/upload", formData);
+      await axios.post(`${FLASK_URL}/upload`, formData);
       setIsFileLoading(false);
       toast.success(t("FileUploadSuccessful"));
-      if (ext === "pdf") getPdfUsefulWords();
-      if (ext === "m4a") getAudioUsefulWords();
+      getPdfUsefulWords();
     } catch {
       setIsFileLoading(false);
       toast.error(t("FileUploadError"));
     }
   };
-
-  const {
-    transcript,
-    listening,
-    resetTranscript,
-    browserSupportsSpeechRecognition,
-  } = useSpeechRecognition();
-
-  const startListening = () => {
-    SpeechRecognition.startListening({ continuous: true });
-    setIsVoiceLoading(true);
-  };
-  const stopListening = () => {
-    SpeechRecognition.stopListening();
-    setIsVoiceLoading(false);
-  };
-
-  const onSubmit = (e) => {
-    e.preventDefault();
-    if (!transcript) { toast.error(t("Pleasestartrecording")); return; }
-    axios.post("/typeSentence", { sentence: transcript })
-      .then((res) => { setUsefulWords(res.data.useful_words); toast.success(t("VoiceExtractionSuccessful")); })
-      .catch(() => toast.error(t("VoiceExtractionError")));
-  };
-
-  if (!browserSupportsSpeechRecognition) {
-    return <span>{t("browserNoSpeech")}</span>;
-  }
 
   return (
     <div className="ts2-page">
@@ -107,111 +154,70 @@ export default function TextSign() {
 
         <div className="ts2-grid">
 
-          {/* Input card */}
+          {/* ── Upload card ── */}
           <div className="ts2-card">
             <div className="ts2-card-header">
-              <FaUpload /> {t("UploadFile")} / <FaMicrophone /> {t("VoiceRecording")}
+              <FaUpload /> {t("UploadFile")}
             </div>
             <div className="ts2-card-body">
-
-              <div className="ts2-method-btns">
-                <button
-                  className={`ts2-method-btn ${activeMethod === "file" ? "active" : ""}`}
-                  onClick={() => setActiveMethod(activeMethod === "file" ? null : "file")}
-                >
-                  <FaUpload /> {t("UploadFile")}
-                </button>
-                <button
-                  className={`ts2-method-btn ${activeMethod === "voice" ? "active" : ""}`}
-                  onClick={() => setActiveMethod(activeMethod === "voice" ? null : "voice")}
-                >
-                  <FaMicrophone /> {t("VoiceRecording")}
-                </button>
-              </div>
-
-              {activeMethod === "file" && (
-                <div className="ts2-input-panel">
-                  <div className="ts2-file-row">
-                    <input
-                      type="file"
-                      onChange={handleSelectFile}
-                      className="ts2-file-input"
-                      id="fileInput"
-                    />
-                    <button className="ts2-btn-convert" onClick={handleUploadFile}>
-                      {t("convertToSign")}
-                    </button>
-                  </div>
-                  {isFileLoading && (
-                    <div className="ts2-loader">
-                      <SyncLoader loading={isFileLoading} color="#667eea" size={8} />
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {activeMethod === "voice" && (
-                <div className="ts2-input-panel">
-                  <div className="ts2-mic-status">
-                    <div className={`ts2-mic-dot ${listening ? "listening" : ""}`} />
-                    {t("microphone")}: {listening ? t("on") : t("off")}
-                  </div>
-                  <div className="ts2-voice-controls">
-                    <button className="ts2-btn-mic start" onClick={startListening}>{t("start")}</button>
-                    <button className="ts2-btn-mic stop" onClick={stopListening}>{t("stop")}</button>
-                    <button className="ts2-btn-mic reset" onClick={resetTranscript}>{t("reset")}</button>
-                  </div>
-                  <textarea
-                    readOnly
-                    className="ts2-transcript"
-                    placeholder={t("saySomething")}
-                    value={transcript}
+              <div className="ts2-input-panel">
+                <div className="ts2-file-row">
+                  <input
+                    type="file"
+                    onChange={handleSelectFile}
+                    className="ts2-file-input"
+                    accept=".pdf"
                   />
-                  <button className="ts2-btn-convert" onClick={onSubmit}>
+                  <button className="ts2-btn-convert" onClick={handleUploadFile}>
                     {t("convertToSign")}
                   </button>
-                  {isVoiceLoading && (
-                    <div className="ts2-loader">
-                      <ScaleLoader loading={isVoiceLoading} color="#667eea" height={20} />
-                    </div>
-                  )}
                 </div>
-              )}
+                {isFileLoading && (
+                  <div className="ts2-loader">
+                    <SyncLoader loading={isFileLoading} color="#667eea" size={8} />
+                  </div>
+                )}
+              </div>
 
-              {activeMethod === null && (
-                <div className="ts2-empty">
-                  <div className="ts2-empty-icon">👆</div>
-                  <div className="ts2-empty-text">{t("PleaseClickUploadFileOrVoiceRecording")}</div>
+              {/* Legend */}
+              <div className="ts2-legend">
+                <div className="ts2-legend-item">
+                  <span className="ts2-legend-dot purple" />
+                  {t("tsLegendEnglish", "English words")}
                 </div>
-              )}
-
+                <div className="ts2-legend-item">
+                  <span className="ts2-legend-dot amber" />
+                  {t("tsLegendSinhala", "Sinhala words (translated)")}
+                </div>
+              </div>
             </div>
           </div>
 
-          {/* Results card */}
+          {/* ── Results card ── */}
           <div className="ts2-card">
             <div className="ts2-card-header success">
-              🤟 {t("convertToSign")}
+              🤟 {t("tsSignResults", "Sign Language Output")}
             </div>
             <div className="ts2-card-body">
-              {usefulWords.length > 0 ? (
-                <ul className="ts2-words-list">
-                  {usefulWords.map((word) => (
-                    <li className="ts2-word-item" key={word}>
-                      {word}
-                      <button className="ts2-word-play">
-                        <img
-                          src="https://img.icons8.com/ios-glyphs/20/ffffff/play--v1.png"
-                          alt="play"
-                        />
-                      </button>
-                    </li>
+              {isTranslating ? (
+                <div className="ts2-translating">
+                  <SyncLoader loading color="#667eea" size={8} />
+                  <div className="ts2-translating-text">
+                    {t("tsTranslating", "Translating & loading signs...")}
+                  </div>
+                </div>
+              ) : signCards.length > 0 ? (
+                <div className="ts2-sign-cards">
+                  {signCards.map((card, idx) => (
+                    <SignCard key={idx} card={card} />
                   ))}
-                </ul>
+                </div>
               ) : (
                 <div className="ts2-empty">
                   <div className="ts2-empty-icon">🤟</div>
-                  <div className="ts2-empty-text">{t("PleaseClickUploadFileOrVoiceRecording")}</div>
+                  <div className="ts2-empty-text">
+                    {t("tsResultsEmpty", "Sign language cards will appear here after you upload a PDF.")}
+                  </div>
                 </div>
               )}
             </div>

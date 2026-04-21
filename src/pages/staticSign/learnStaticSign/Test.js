@@ -7,7 +7,7 @@ import axios from 'axios';
 
 function Test({ webcamRef, canvasRef }) {
     return (
-        <div style={{ position: 'relative', width: '100%', paddingBottom: '75%' }}>
+        <div style={{ position: 'relative', width: '100%', height: '100%' }}>
             <Webcam
                 ref={webcamRef}
                 style={{

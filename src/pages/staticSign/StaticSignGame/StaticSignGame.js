@@ -262,6 +262,10 @@ export default function StaticSignGame() {
                 />
               </div>
               <div className="ss-sign-name">{SignData[go].name}</div>
+              <div className="ss-img-label" style={{ marginTop: '0.75rem', marginBottom: '0.35rem' }}>{t('ssSignLanguage', 'Sign Language')}</div>
+              <div className="ss-img-box">
+                <img src={SignData[go].signImage} alt={`Sign ${SignData[go].name}`} />
+              </div>
               <div className="ss-img-label">{t('ssSignThisLetter')}</div>
             </div>
           </div>

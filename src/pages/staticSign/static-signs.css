@@ -97,7 +97,7 @@
 /* ── Grid layouts ── */
 .ss-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-columns: 300px 1fr 280px;
   gap: 1.25rem;
   align-items: start;
 }
@@ -182,15 +182,32 @@
   margin-top: 0.75rem;
 }
 
-/* ── Webcam / canvas area ── */
+/* ── Webcam / canvas area — matches traffic-webcam-video-container ── */
 .ss-webcam-box {
-  border-radius: 12px;
-  overflow: hidden;
-  background: #1a1a2e;
+  position: relative;
   width: 100%;
+  aspect-ratio: 4 / 3;
+  border-radius: 20px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.ss-webcam-box:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
 }
 
 .ss-webcam-off {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   padding: 2rem;
   color: #666;
   font-size: 0.88rem;
@@ -502,6 +519,42 @@
   margin: 1rem 0;
 }
 
+/* ── Save notification — fixed toast, no layout shift ── */
+.ss-notification {
+  position: fixed;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  border-radius: 12px;
+  padding: 0.75rem 1.25rem;
+  font-size: 0.88rem;
+  font-weight: 700;
+  font-family: 'Poppins', sans-serif;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.14);
+  animation: ssToastIn 0.3s ease;
+  max-width: 320px;
+}
+
+.ss-notification.saving {
+  background: #eff6ff;
+  border: 1.5px solid #93c5fd;
+  color: #1e40af;
+}
+
+.ss-notification.saved {
+  background: #f0fdf4;
+  border: 1.5px solid #86efac;
+  color: #166534;
+}
+
+@keyframes ssToastIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
 /* ── Animations ── */
 @keyframes ssFadeIn {
   from { opacity: 0; transform: translateY(8px); }
@@ -509,7 +562,7 @@
 }
 
 /* ── Responsive ── */
-@media (max-width: 992px) {
+@media (max-width: 1100px) {
   .ss-grid {
     grid-template-columns: 1fr 1fr;
   }
